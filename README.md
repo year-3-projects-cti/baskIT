@@ -1,20 +1,14 @@
 # BaskIT - Themed gift baskets
-</br></br>
+**BaskIT** is an e‑commerce web app for curated, themed gift baskets focused on the Romanian market. Customers can browse categories, view basket pages with images, descriptions, prices in RON and stock status, add items to a cart, and pay securely via Stripe. At checkout they provide contact and shipping details (with an optional gift note), receive order confirmation, and can track delivery. Orders follow a clear lifecycle (Created → Paid → Fulfilled → Canceled/Refunded), and inventory is tracked **per basket** with safeguards to prevent overselling.
+
+Admins have a single **ADMIN** role with full access via a simple dashboard to manage baskets, categories, prices, images, and orders; generate shipping labels and store tracking through a pluggable courier integration (e.g., aggregator or FanCourier/SameDay); and review a complete audit log of sensitive actions and state changes. The MVP is a mobile‑first React + Spring Boot + PostgreSQL monolith using ports/adapters, JWT authentication, webhook signature verification, configurable VAT, structured logs, and idempotent webhooks—providing a solid baseline for later extensions such as build‑your‑own baskets.
+
 ## Team
 
 * *PRODAN Florin Mihai Alexandru* - 1241EA
 * *DUMITRU Vlad Andrei* - 1241EA
 
-</br></br>
 
-## Project Description
-
-**BaskIT** is an e‑commerce web app for curated, themed gift baskets focused on the Romanian market. Customers can browse categories, view basket pages with images, descriptions, prices in RON and stock status, add items to a cart, and pay securely via Stripe. At checkout they provide contact and shipping details (with an optional gift note), receive order confirmation, and can track delivery. Orders follow a clear lifecycle (Created → Paid → Fulfilled → Canceled/Refunded), and inventory is tracked **per basket** with safeguards to prevent overselling.
-
-Admins have a single **ADMIN** role with full access via a simple dashboard to manage baskets, categories, prices, images, and orders; generate shipping labels and store tracking through a pluggable courier integration (e.g., aggregator or FanCourier/SameDay); and review a complete audit log of sensitive actions and state changes. The MVP is a mobile‑first React + Spring Boot + PostgreSQL monolith using ports/adapters, JWT authentication, webhook signature verification, configurable VAT, structured logs, and idempotent webhooks—providing a solid baseline for later extensions such as build‑your‑own baskets.
-
-
-</br></br>
 
 ## Design Patterns
 
