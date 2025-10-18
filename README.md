@@ -1,4 +1,4 @@
-# BaskIT — Milestone 1
+# BaskIT - Themed gift baskets
 </br></br>
 ## Team
 
