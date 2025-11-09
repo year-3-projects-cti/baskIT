@@ -31,7 +31,7 @@ const Home = () => {
                   Explorează Coșurile <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+              <Button asChild size="lg" variant="outline" className="border-white text-primary hover:bg-white/10">
                 <Link to="/about">Despre Noi</Link>
               </Button>
             </div>

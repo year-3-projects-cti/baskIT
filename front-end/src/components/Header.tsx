@@ -1,3 +1,4 @@
+import { UserDropdown } from "@/components/ui/UserDropdown";
 import { ShoppingCart, Search, Menu, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { useState } from "react";
 export const Header = () => {
   const [cartCount] = useState(0);
   const navigate = useNavigate();
+  
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
@@ -50,9 +52,7 @@ export const Header = () => {
 
           {/* Actions */}
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="icon" className="hidden md:flex">
-              <User className="h-5 w-5" />
-            </Button>
+            <UserDropdown />
             
             <Button
               variant="ghost"
