@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { useBaskets } from "@/hooks/useBaskets";
 import { useMemo } from "react";
 import { slugify } from "@/lib/utils";
+import { HeroVisual } from "@/components/HeroVisual";
 
 const Home = () => {
   const { data: baskets = [], isLoading } = useBaskets();
@@ -39,47 +40,49 @@ const Home = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-hero py-20 md:py-32 text-white">
-        <div className="absolute inset-0 hero-grid opacity-25"></div>
-        <div className="hero-blob bg-white/25 w-72 h-72 -top-20 left-4"></div>
-        <div className="hero-blob hero-blob-delayed bg-accent/40 w-96 h-96 -bottom-32 right-6"></div>
-        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-primary/40 to-transparent"></div>
+      <section className="hero-section">
+        <div className="hero-backdrop" />
         <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <Badge className="mb-6 border-white/40 bg-white/10 text-white shadow-soft">
-              🎁 Bask IT Up! – Artizanați în București
-            </Badge>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight tracking-tight">
-              Coșuri Cadou Curate Pentru Fiecare Moment Special
-            </h1>
-            <p className="text-lg md:text-xl mb-8 text-white/85">
-              Descoperă colecții unice de coșuri cadou personalizate, livrate direct la ușa ta oriunde în România.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 shadow-strong">
-                <Link to="/catalog">
-                  Explorează Coșurile <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/60 text-white hover:bg-white/10">
-                <Link to="/about">Despre Noi</Link>
-              </Button>
+          <div className="flex flex-col-reverse lg:flex-row items-center gap-12">
+            <div className="w-full lg:w-1/2 text-center lg:text-left">
+              <Badge className="mb-6 border-white/40 bg-white/10 text-white shadow-soft">
+                🎁 Bask IT Up! – Artizanați în București
+              </Badge>
+              <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight tracking-tight text-white">
+                Coșuri Cadou Curate Pentru Fiecare Moment Special
+              </h1>
+              <p className="text-lg md:text-xl mb-8 text-white/85">
+                Descoperă colecții unice de coșuri cadou personalizate, livrate direct la ușa ta oriunde în România.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 shadow-strong">
+                  <Link to="/catalog">
+                    Explorează Coșurile <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="border-white/60 text-white hover:bg-white/10">
+                  <Link to="/about">Despre Noi</Link>
+                </Button>
+              </div>
+              <div className="mt-12 grid gap-4 text-left sm:grid-cols-3">
+                {heroStats.map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="glass-card flex items-center gap-4 rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur"
+                  >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15">
+                      <stat.icon className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <p className="text-sm uppercase tracking-wide text-white/70">{stat.label}</p>
+                      <p className="text-2xl font-semibold">{stat.value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="mt-12 grid gap-4 text-left sm:grid-cols-3">
-              {heroStats.map((stat) => (
-                <div
-                  key={stat.label}
-                  className="glass-card flex items-center gap-4 rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur"
-                >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15">
-                    <stat.icon className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <p className="text-sm uppercase tracking-wide text-white/70">{stat.label}</p>
-                    <p className="text-2xl font-semibold">{stat.value}</p>
-                  </div>
-                </div>
-              ))}
+            <div className="w-full lg:w-1/2 flex justify-center">
+              <HeroVisual />
             </div>
           </div>
         </div>
@@ -88,8 +91,8 @@ const Home = () => {
       {/* Features */}
       <section className="py-16 bg-secondary/30">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="text-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="text-center px-3">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <Gift className="h-6 w-6 text-primary" />
               </div>
@@ -98,7 +101,7 @@ const Home = () => {
                 Fiecare coș este creat cu atenție la detalii
               </p>
             </div>
-            <div className="text-center">
+            <div className="text-center px-3">
               <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
                 <Heart className="h-6 w-6 text-accent" />
               </div>
@@ -107,7 +110,7 @@ const Home = () => {
                 Adaugă mesaje și accesorii speciale
               </p>
             </div>
-            <div className="text-center">
+            <div className="text-center px-3">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <Truck className="h-6 w-6 text-primary" />
               </div>
@@ -116,7 +119,7 @@ const Home = () => {
                 Livrăm în toată România în 24-48h
               </p>
             </div>
-            <div className="text-center">
+            <div className="text-center px-3">
               <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
                 <Shield className="h-6 w-6 text-accent" />
               </div>

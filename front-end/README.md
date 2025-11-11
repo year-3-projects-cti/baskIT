@@ -1,73 +1,51 @@
-# Welcome to your Lovable project
+# Front-end (Vite + React + TypeScript)
 
-## Project info
+This package renders the Bask IT Up! storefront and admin dashboard using Vite, React, TypeScript, Tailwind CSS, and shadcn-ui.
 
-**URL**: https://lovable.dev/projects/8ddf2822-c40a-4f32-a505-b461bfbd132e
-
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/8ddf2822-c40a-4f32-a505-b461bfbd132e) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Getting Started
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+cd front-end
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+By default the app expects the backend to run at http://localhost:8080. Override the API target by creating a `.env` file and setting `VITE_API_URL`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Production Build
 
-**Use GitHub Codespaces**
+```sh
+npm run build
+npm run preview
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+The Dockerfile in the repo root compiles these assets and serves them through Nginx for deployments.
 
-## What technologies are used for this project?
+## Linting
 
-This project is built with:
+```sh
+npm run lint
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Environment Variables
 
-## How can I deploy this project?
+| Variable        | Description                               | Default                       |
+|-----------------|-------------------------------------------|-------------------------------|
+| `VITE_API_URL`  | Base URL for the Spring Boot API          | `http://localhost:8080/api`   |
 
-Simply open [Lovable](https://lovable.dev/projects/8ddf2822-c40a-4f32-a505-b461bfbd132e) and click on Share -> Publish.
+## Updating the 3D Hero Basket
 
-## Can I connect a custom domain to my Lovable project?
+The home hero loads a glTF model via the [`<model-viewer>`](https://modelviewer.dev/) web component. Drop your `.glb` file in `front-end/public/models/basket.glb` (or adjust the path inside `HeroVisual.tsx`). The poster fallback lives in `public/fallbacks/basket-poster.png`.
 
-Yes, you can!
+## Project Structure (excerpt)
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```
+src/
+  components/      # shared UI pieces (cards, header, footer)
+  hooks/           # React Query hooks for API access
+  lib/             # utilities (auth context, fetch helpers)
+  pages/           # route-level screens (catalog, admin, etc.)
+  types/           # TypeScript domain models
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+All product data now flows from the backend; there are no local mocks. Use the Admin dashboard (`/admin`) to create or edit gift baskets once authenticated. Content managers can paste full HTML descriptions, which render directly on product detail pages.

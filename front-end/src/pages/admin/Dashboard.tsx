@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Package, ShoppingCart, TrendingUp, Users, Eye, Edit, Trash2 } from "lucide-react";
-import { mockOrders } from "@/data/mockOrders";
 import { useBaskets, useBasketMutations } from "@/hooks/useBaskets";
 import { BasketSummary, BasketPayload } from "@/types/basket";
 import { toast } from "sonner";
@@ -70,9 +69,9 @@ const AdminDashboard = () => {
     };
   }, [editingBasket, form]);
 
-  const totalRevenue = mockOrders.reduce((sum, order) => sum + order.total, 0);
-  const totalOrders = mockOrders.length;
   const lowStockProducts = baskets.filter((p) => p.stock < 5);
+  const totalRevenue = baskets.reduce((sum, basket) => sum + basket.price * Math.max(basket.stock, 0), 0);
+  const totalOrders = 0;
 
   return (
     <div className="min-h-screen bg-secondary/20 py-8">
@@ -94,14 +93,14 @@ const AdminDashboard = () => {
               <p className="text-xs text-muted-foreground">+12% față de luna trecută</p>
             </CardContent>
           </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Comenzi</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Comenzi</CardTitle>
+              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{totalOrders}</div>
-              <p className="text-xs text-muted-foreground">2 în așteptare</p>
+              <p className="text-xs text-muted-foreground">Integrarea comenzilor urmează</p>
             </CardContent>
           </Card>
         <Card>
@@ -216,29 +215,8 @@ const AdminDashboard = () => {
                 <CardTitle>Comenzi Recente</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {mockOrders.map((order) => (
-                    <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <h3 className="font-semibold">{order.orderNumber}</h3>
-                        <p className="text-sm text-muted-foreground">{order.customer.name}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{order.date}</p>
-                      </div>
-                      <div className="text-center">
-                        <Badge
-                          variant={order.status === "delivered" ? "default" : "secondary"}
-                        >
-                          {order.status === "delivered" ? "Livrat" : "În procesare"}
-                        </Badge>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold">{order.total.toFixed(2)} RON</p>
-                        <Button size="sm" variant="outline" className="mt-2">
-                          Vezi detalii
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                <div className="rounded-xl border border-dashed p-6 text-center text-muted-foreground">
+                  Fluxul de comenzi va fi conectat după implementarea checkout-ului real.
                 </div>
               </CardContent>
             </Card>

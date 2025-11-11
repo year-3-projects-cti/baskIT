@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,12 +14,29 @@ const ProductDetail = () => {
   const { data: product, isLoading, isError } = useBasketDetail(slug);
   const [quantity, setQuantity] = useState(1);
   const [giftNote, setGiftNote] = useState("");
+  const [showBasketAnimation, setShowBasketAnimation] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const addToCart = () => {
     if (!product) return;
     toast.success("Adăugat în coș!", {
       description: `${product.title} x${quantity}`,
     });
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    setShowBasketAnimation(true);
+    timeoutRef.current = setTimeout(() => {
+      setShowBasketAnimation(false);
+    }, 2200);
   };
 
   if (isLoading) {
@@ -29,8 +46,6 @@ const ProductDetail = () => {
       </div>
     );
   }
-
-  const outOfStock = product.stock <= 0;
 
   if (isError || !product) {
     return (
@@ -45,8 +60,26 @@ const ProductDetail = () => {
     );
   }
 
+  const outOfStock = product.stock <= 0;
+
   return (
     <div className="min-h-screen py-8">
+      {showBasketAnimation && (
+        <div className="cart-animation-overlay">
+          <div className="cart-animation-visual">
+            <model-viewer
+              className="cart-animation-model"
+              src="/models/basket.glb"
+              alt="Model 3D coș cadou"
+              auto-rotate
+              autoplay
+              disable-zoom
+              camera-controls
+              exposure="1"
+            />
+          </div>
+        </div>
+      )}
       <div className="container mx-auto px-4">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-8">

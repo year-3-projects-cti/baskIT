@@ -32,7 +32,7 @@ On first boot the backend seeds a root administrator:
 - Email: `admin@baskitup.com`
 - Password: `change-me-admin`
 
-Log in with these credentials, update the password from the Admin area, and override the values via `APP_ADMIN_EMAIL` / `APP_ADMIN_PASSWORD` in production.
+Log in with these credentials, update the password from the Admin area, and override the values via `APP_ADMIN_EMAIL` / `APP_ADMIN_PASSWORD` in production. The catalog starts empty—create your first baskets via `/admin` or the `/api/admin/baskets` endpoints after authenticating.
 
 ## Basket API Highlights
 
