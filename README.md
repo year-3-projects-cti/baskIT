@@ -10,6 +10,40 @@ Admins have a single **ADMIN** role with full access via a simple dashboard to m
 
 
 
+## Running with Docker
+
+Build and launch both the Spring Boot API and the Vite front-end with:
+
+```sh
+docker compose up --build
+```
+
+Services:
+
+- Front-end (Nginx serving the Vite build) → http://localhost:5173
+- Back-end (Spring Boot) → http://localhost:8080
+
+Stop everything via `docker compose down`. Adjust environment variables (Spring profiles, DB URLs, API keys) directly inside `docker-compose.yml` when needed.
+
+## Default Admin Account
+
+On first boot the backend seeds a root administrator:
+
+- Email: `admin@baskitup.com`
+- Password: `change-me-admin`
+
+Log in with these credentials, update the password from the Admin area, and override the values via `APP_ADMIN_EMAIL` / `APP_ADMIN_PASSWORD` in production.
+
+## Basket API Highlights
+
+- `GET /api/baskets` – public catalog feed (optional `category`, `search` query params).
+- `GET /api/baskets/{slug}` – full HTML description for product detail pages.
+- `POST /api/admin/baskets` – create (roles: ADMIN, CONTENT_MANAGER).
+- `PUT /api/admin/baskets/{id}` – update.
+- `DELETE /api/admin/baskets/{id}` – delete.
+
+Product descriptions accept full HTML so content managers can embed rich layouts and imagery directly from the CMS.
+
 ## Design Patterns
 
 

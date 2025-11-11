@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ProductCard } from "@/components/ProductCard";
-import { products, categories } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,43 +8,100 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Filter, X } from "lucide-react";
+import { useBaskets } from "@/hooks/useBaskets";
+import { slugify } from "@/lib/utils";
+
+const defaultPriceRange: [number, number] = [0, 400];
 
 const Catalog = () => {
-  const [priceRange, setPriceRange] = useState([0, 400]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const { data: baskets = [], isLoading } = useBaskets();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [priceRange, setPriceRange] = useState<[number, number]>(defaultPriceRange);
+  const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get("category") ?? "all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("featured");
 
-  const filteredProducts = products.filter(product => {
-    const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
-    const matchesCategory = !selectedCategory || selectedCategory === "all" || product.category === selectedCategory;
-    const matchesSearch = !searchQuery || 
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    return matchesPrice && matchesCategory && matchesSearch;
-  });
+  const maxPrice = useMemo(() => {
+    if (!baskets.length) return defaultPriceRange[1];
+    const highest = Math.max(...baskets.map((b) => b.price));
+    return Math.ceil(highest / 50) * 50;
+  }, [baskets]);
 
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    switch (sortBy) {
-      case "price-asc":
-        return a.price - b.price;
-      case "price-desc":
-        return b.price - a.price;
-      case "name":
-        return a.name.localeCompare(b.name);
-      default:
-        return 0;
+  useEffect(() => {
+    setPriceRange([0, maxPrice]);
+  }, [maxPrice]);
+
+  useEffect(() => {
+    const category = searchParams.get("category");
+    if (category) {
+      setSelectedCategory(category);
     }
-  });
+  }, [searchParams]);
+
+  const categories = useMemo(() => {
+    const map = new Map<string, { count: number; label: string }>();
+    baskets.forEach((basket) => {
+      const slug = slugify(basket.category);
+      map.set(slug, { count: (map.get(slug)?.count || 0) + 1, label: basket.category });
+    });
+    return Array.from(map.entries()).map(([slug, info]) => ({
+      slug,
+      name: info.label,
+      count: info.count,
+    }));
+  }, [baskets]);
+
+  const filteredProducts = useMemo(() => {
+    return baskets.filter((product) => {
+      const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+      const matchesCategory =
+        !selectedCategory || selectedCategory === "all" || slugify(product.category) === selectedCategory;
+      const matchesSearch =
+        !searchQuery ||
+        product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.prompt.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesPrice && matchesCategory && matchesSearch;
+    });
+  }, [baskets, priceRange, selectedCategory, searchQuery]);
+
+  const sortedProducts = useMemo(() => {
+    return [...filteredProducts].sort((a, b) => {
+      switch (sortBy) {
+        case "price-asc":
+          return a.price - b.price;
+        case "price-desc":
+          return b.price - a.price;
+        case "name":
+          return a.title.localeCompare(b.title);
+        default:
+          return 0;
+      }
+    });
+  }, [filteredProducts, sortBy]);
 
   const clearFilters = () => {
-    setPriceRange([0, 400]);
+    setPriceRange([0, maxPrice]);
     setSelectedCategory("all");
     setSearchQuery("");
+    setSearchParams({});
   };
 
-  const hasActiveFilters = priceRange[0] > 0 || priceRange[1] < 400 || (selectedCategory && selectedCategory !== "all") || searchQuery;
+  const hasActiveFilters =
+    priceRange[0] > 0 ||
+    priceRange[1] < maxPrice ||
+    (selectedCategory && selectedCategory !== "all") ||
+    Boolean(searchQuery);
+
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
+    if (value === "all") {
+      searchParams.delete("category");
+      setSearchParams(searchParams);
+    } else {
+      searchParams.set("category", value);
+      setSearchParams(searchParams);
+    }
+  };
 
   return (
     <div className="min-h-screen py-8">
@@ -53,7 +110,7 @@ const Catalog = () => {
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Coșuri Cadou</h1>
           <p className="text-muted-foreground">
-            Descoperă {products.length} coșuri cadou unice pentru orice ocazie
+            Descoperă {baskets.length} coșuri cadou unice pentru orice ocazie
           </p>
         </div>
 
@@ -87,14 +144,14 @@ const Catalog = () => {
               {/* Category Filter */}
               <div className="space-y-2">
                 <Label>Categorie</Label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <Select value={selectedCategory} onValueChange={handleCategoryChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Toate categoriile" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Toate categoriile</SelectItem>
                   {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.name}>
+                    <SelectItem key={cat.slug} value={cat.slug}>
                       {cat.name} ({cat.count})
                     </SelectItem>
                   ))}
@@ -107,7 +164,7 @@ const Catalog = () => {
                 <Label>Preț (RON)</Label>
                 <Slider
                   min={0}
-                  max={400}
+                  max={maxPrice}
                   step={10}
                   value={priceRange}
                   onValueChange={setPriceRange}
@@ -123,14 +180,14 @@ const Catalog = () => {
               <div className="space-y-2">
                 <Label>Ocazii Populare</Label>
                 <div className="flex flex-wrap gap-2">
-                  {["Crăciun", "Valentine's Day", "Naștere", "Corporate"].map((tag) => (
+                  {categories.slice(0, 6).map((cat) => (
                     <Badge
-                      key={tag}
+                      key={cat.slug}
                       variant="outline"
                       className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                      onClick={() => setSelectedCategory(tag)}
+                      onClick={() => handleCategoryChange(cat.slug)}
                     >
-                      {tag}
+                      {cat.name}
                     </Badge>
                   ))}
                 </div>
@@ -162,7 +219,9 @@ const Catalog = () => {
             </div>
 
             {/* Products */}
-            {sortedProducts.length > 0 ? (
+            {isLoading ? (
+              <div className="text-muted-foreground py-16">Se încarcă produsele...</div>
+            ) : sortedProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {sortedProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />

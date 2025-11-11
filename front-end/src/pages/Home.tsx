@@ -1,29 +1,59 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProductCard } from "@/components/ProductCard";
-import { products, categories } from "@/data/mockData";
 import { ArrowRight, Gift, Truck, Heart, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useBaskets } from "@/hooks/useBaskets";
+import { useMemo } from "react";
+import { slugify } from "@/lib/utils";
 
 const Home = () => {
-  const featuredProducts = products.filter(p => p.isBestseller).slice(0, 4);
-  const newProducts = products.filter(p => p.isNew).slice(0, 4);
+  const { data: baskets = [], isLoading } = useBaskets();
+
+  const categoryStats = useMemo(() => {
+    const map = new Map<string, number>();
+    baskets.forEach((basket) => {
+      const key = basket.category;
+      map.set(key, (map.get(key) || 0) + 1);
+    });
+    return Array.from(map.entries()).map(([name, count]) => ({
+      id: slugify(name),
+      name,
+      slug: slugify(name),
+      count,
+    }));
+  }, [baskets]);
+
+  const featuredProducts = baskets.slice(0, 4);
+  const newProducts = baskets.slice(4, 8);
+  const heroStats = [
+    { icon: Gift, label: "Coșuri active", value: `${baskets.length}` },
+    { icon: Truck, label: "Livrare rapidă", value: "24-48h" },
+    {
+      icon: Heart,
+      label: "Clienți fericiți",
+      value: "4.9/5",
+    },
+  ];
 
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-hero py-20 md:py-32">
-        <div className="absolute inset-0 bg-[url('/patterns/basket-pattern.svg')] opacity-10"></div>
+      <section className="relative overflow-hidden bg-gradient-hero py-20 md:py-32 text-white">
+        <div className="absolute inset-0 hero-grid opacity-25"></div>
+        <div className="hero-blob bg-white/25 w-72 h-72 -top-20 left-4"></div>
+        <div className="hero-blob hero-blob-delayed bg-accent/40 w-96 h-96 -bottom-32 right-6"></div>
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-primary/40 to-transparent"></div>
         <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl mx-auto text-center text-white">
-            <Badge className="mb-6 bg-white/20 text-white border-white/30">
-              🎁 Bask It Up!
+          <div className="max-w-3xl mx-auto text-center">
+            <Badge className="mb-6 border-white/40 bg-white/10 text-white shadow-soft">
+              🎁 Bask IT Up! – Artizanați în București
             </Badge>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight tracking-tight">
               Coșuri Cadou Curate Pentru Fiecare Moment Special
             </h1>
-            <p className="text-lg md:text-xl mb-8 text-white/90">
-              Descoperă colecții unice de coșuri cadou personalizate, livrate direct la ușa ta în România.
+            <p className="text-lg md:text-xl mb-8 text-white/85">
+              Descoperă colecții unice de coșuri cadou personalizate, livrate direct la ușa ta oriunde în România.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 shadow-strong">
@@ -31,9 +61,25 @@ const Home = () => {
                   Explorează Coșurile <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-white text-primary hover:bg-white/10">
+              <Button asChild size="lg" variant="outline" className="border-white/60 text-white hover:bg-white/10">
                 <Link to="/about">Despre Noi</Link>
               </Button>
+            </div>
+            <div className="mt-12 grid gap-4 text-left sm:grid-cols-3">
+              {heroStats.map((stat) => (
+                <div
+                  key={stat.label}
+                  className="glass-card flex items-center gap-4 rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15">
+                    <stat.icon className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm uppercase tracking-wide text-white/70">{stat.label}</p>
+                    <p className="text-2xl font-semibold">{stat.value}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -92,23 +138,29 @@ const Home = () => {
               De la sărbători tradiționale la momente personale speciale
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {categories.slice(0, 8).map((category) => (
-              <Link
-                key={category.id}
-                to={`/catalog?category=${category.slug}`}
-                className="glass-card rounded-2xl p-6 text-center hover-lift group"
-              >
-                <div className="text-4xl mb-3">🧺</div>
-                <h3 className="font-semibold group-hover:text-primary transition-colors">
-                  {category.name}
-                </h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {category.count} produse
-                </p>
-              </Link>
-            ))}
-          </div>
+          {categoryStats.length === 0 ? (
+            <div className="text-muted-foreground">
+              Adăugă primul coș pentru a popula categoriile afișate aici.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {categoryStats.slice(0, 8).map((category) => (
+                <Link
+                  key={category.id}
+                  to={`/catalog?category=${category.slug}`}
+                  className="glass-card rounded-2xl p-6 text-center hover-lift group"
+                >
+                  <div className="text-4xl mb-3">🧺</div>
+                  <h3 className="font-semibold group-hover:text-primary transition-colors">
+                    {category.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {category.count} produse
+                  </p>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -126,11 +178,19 @@ const Home = () => {
               </Link>
             </Button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          {isLoading ? (
+            <p className="text-muted-foreground">Se încarcă produsele...</p>
+          ) : featuredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {featuredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-muted-foreground">
+              Nu avem încă produse de afișat. Revino în curând!
+            </div>
+          )}
         </div>
       </section>
 
@@ -148,11 +208,19 @@ const Home = () => {
               </Link>
             </Button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {newProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          {isLoading ? (
+            <p className="text-muted-foreground">Se încarcă produsele...</p>
+          ) : newProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {newProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-muted-foreground">
+              Nu există produse noi momentan.
+            </div>
+          )}
         </div>
       </section>
 

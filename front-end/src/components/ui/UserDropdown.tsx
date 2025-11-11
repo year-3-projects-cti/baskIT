@@ -8,6 +8,11 @@ export const UserDropdown = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
+
   if (!user) {
     return (
       <DropdownMenu>
@@ -17,13 +22,16 @@ export const UserDropdown = () => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Nu esti conectat!</DropdownMenuLabel>
+          <DropdownMenuLabel>Nu ești conectat</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => navigate("/login")}>Conectează-te</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate("/register")}>Creează cont</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     );
   }
+
+  const canAccessAdmin = user.role === "ADMIN" || user.role === "CONTENT_MANAGER";
 
   return (
     <DropdownMenu>
@@ -33,16 +41,19 @@ export const UserDropdown = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel>{user.name || user.email}</DropdownMenuLabel>
+        <DropdownMenuLabel>
+          <span className="block text-sm font-semibold">{user.name || user.email}</span>
+          <span className="text-xs text-muted-foreground capitalize">{user.role.toLowerCase().replace(/_/g, " ")}</span>
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => navigate("/track")}>Comenzile mele</DropdownMenuItem>
-        {user.role === "ADMIN" && (
-          <DropdownMenuItem onClick={() => navigate("/admin")}>Admin</DropdownMenuItem>
+        {canAccessAdmin && (
+          <DropdownMenuItem onClick={() => navigate("/admin")}>Zona administrativă</DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={logout}>Deconectare</DropdownMenuItem>
+        <DropdownMenuItem onClick={handleLogout}>Deconectare</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+};
 

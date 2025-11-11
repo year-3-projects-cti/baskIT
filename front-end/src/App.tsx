@@ -16,6 +16,8 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import FAQ from "./pages/FAQ";
 import AdminDashboard from "./pages/admin/Dashboard";
+import Unauthorized from "./pages/Unauthorized";
+import { ProtectedRoute } from "./components/routing/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -43,7 +45,15 @@ const App = () => (
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/faq" element={<FAQ />} />
-                <Route path="/admin" element={<AdminDashboard />} />
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute roles={["ADMIN", "CONTENT_MANAGER"]}>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/unauthorized" element={<Unauthorized />} />
                 <Route path="*" element={<NotFound />} />
                 <Route path='/login' element={<Login />} />
                 <Route path='/register' element={<Register />} />

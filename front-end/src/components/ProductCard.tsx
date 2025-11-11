@@ -1,28 +1,26 @@
-import { Product } from "@/data/mockData";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
+import { BasketSummary } from "@/types/basket";
 
 interface ProductCardProps {
-  product: Product;
+  product: BasketSummary;
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
-  const hasDiscount = product.originalPrice && product.originalPrice > product.price;
-  const discountPercent = hasDiscount
-    ? Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)
-    : 0;
+  const lowStock = product.stock < 5;
+  const cover = product.heroImage;
 
   return (
     <Link to={`/product/${product.slug}`}>
       <div className="glass-card rounded-2xl overflow-hidden hover-lift group">
         {/* Image Container */}
         <div className="relative aspect-square bg-secondary/30 overflow-hidden">
-          {product.image ? (
+          {cover ? (
             <img
-              src={product.image}
-              alt={product.name}
+              src={cover}
+              alt={product.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (
@@ -33,26 +31,12 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           
           {/* Badges */}
           <div className="absolute top-3 left-3 flex flex-col gap-2">
-            {product.isNew && (
-              <Badge className="bg-accent text-accent-foreground">Nou</Badge>
-            )}
-            {hasDiscount && (
-              <Badge className="bg-destructive text-destructive-foreground">
-                -{discountPercent}%
-              </Badge>
-            )}
-            {product.stock < 5 && (
+            {lowStock && (
               <Badge variant="outline" className="bg-card/90">
                 Stoc redus
               </Badge>
             )}
           </div>
-
-          {product.isBestseller && (
-            <Badge className="absolute top-3 right-3 bg-primary text-primary-foreground">
-              Bestseller
-            </Badge>
-          )}
         </div>
 
         {/* Content */}
@@ -62,20 +46,15 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               {product.category}
             </p>
             <h3 className="font-semibold text-lg group-hover:text-primary transition-colors line-clamp-1">
-              {product.name}
+              {product.title}
             </h3>
             <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-              {product.description}
+              {product.prompt}
             </p>
           </div>
 
           <div className="flex items-center justify-between pt-2">
             <div className="space-y-1">
-              {hasDiscount && (
-                <p className="text-xs text-muted-foreground line-through">
-                  {product.originalPrice} RON
-                </p>
-              )}
               <p className="text-xl font-bold text-primary">
                 {product.price} RON
               </p>

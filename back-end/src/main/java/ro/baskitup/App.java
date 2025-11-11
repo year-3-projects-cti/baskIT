@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication(scanBasePackages = "ro.baskitup")
 @EnableJpaRepositories(basePackages = "ro.baskitup.adapters.persistence")
-@EntityScan(basePackages = "ro.baskitup.domain.model")
+@EntityScan(basePackages = {"ro.baskitup.domain.model", "ro.baskitup.adapters.persistence"})
 public class App {
   public static void main(String[] args) {
     SpringApplication.run(App.class, args);
