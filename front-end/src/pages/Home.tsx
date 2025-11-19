@@ -3,13 +3,14 @@ import { Badge } from "@/components/ui/badge";
 import { ProductCard } from "@/components/ProductCard";
 import { ArrowRight, Gift, Truck, Heart, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useBaskets } from "@/hooks/useBaskets";
+import { useBaskets, useFeaturedBaskets } from "@/hooks/useBaskets";
 import { useMemo } from "react";
 import { slugify } from "@/lib/utils";
 import { HeroVisual } from "@/components/HeroVisual";
 
 const Home = () => {
   const { data: baskets = [], isLoading } = useBaskets();
+  const { data: featuredProducts = [], isLoading: featuredLoading } = useFeaturedBaskets();
 
   const categoryStats = useMemo(() => {
     const map = new Map<string, number>();
@@ -25,8 +26,7 @@ const Home = () => {
     }));
   }, [baskets]);
 
-  const featuredProducts = baskets.slice(0, 4);
-  const newProducts = baskets.slice(4, 8);
+  const newProducts = baskets.slice(0, 4);
   const heroStats = [
     { icon: Gift, label: "Coșuri active", value: `${baskets.length}` },
     { icon: Truck, label: "Livrare rapidă", value: "24-48h" },
@@ -181,7 +181,7 @@ const Home = () => {
               </Link>
             </Button>
           </div>
-          {isLoading ? (
+          {featuredLoading ? (
             <p className="text-muted-foreground">Se încarcă produsele...</p>
           ) : featuredProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

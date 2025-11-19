@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchBaskets, fetchBasketBySlug, createBasket, updateBasket, deleteBasket } from "@/lib/baskets";
+import { fetchBaskets, fetchBasketBySlug, createBasket, updateBasket, deleteBasket, fetchFeaturedBaskets } from "@/lib/baskets";
 import { BasketDetail, BasketPayload, BasketSummary } from "@/types/basket";
 import { useAuth } from "@/lib/auth";
 
@@ -14,6 +14,12 @@ export const useBasketDetail = (slug?: string) =>
     queryKey: ["baskets", slug],
     queryFn: () => fetchBasketBySlug(slug as string),
     enabled: Boolean(slug),
+  });
+
+export const useFeaturedBaskets = () =>
+  useQuery<BasketSummary[]>({
+    queryKey: ["baskets", "featured"],
+    queryFn: () => fetchFeaturedBaskets(),
   });
 
 export const useBasketMutations = () => {

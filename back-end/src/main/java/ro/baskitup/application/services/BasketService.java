@@ -25,9 +25,11 @@ public class BasketService {
   private static final Pattern NON_ALNUM = Pattern.compile("[^a-z0-9]+");
 
   private final BasketRepository baskets;
+  private final BasketMapper mapper;
 
-  public BasketService(BasketRepository baskets) {
+  public BasketService(BasketRepository baskets, BasketMapper mapper) {
     this.baskets = baskets;
+    this.mapper = mapper;
   }
 
   @Transactional(readOnly = true)
@@ -36,7 +38,7 @@ public class BasketService {
         .filter(b -> filterByCategory(b, category))
         .filter(b -> filterBySearch(b, search))
         .sorted(Comparator.comparing(BasketEntity::getCreatedAt).reversed())
-        .map(this::toSummary)
+        .map(mapper::toSummary)
         .toList();
   }
 
@@ -44,14 +46,14 @@ public class BasketService {
   public BasketDetailView findBySlug(String slug) {
     BasketEntity basket = baskets.findBySlugIgnoreCase(slug)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Coșul cerut nu a fost găsit"));
-    return toDetail(basket);
+    return mapper.toDetail(basket);
   }
 
   public BasketDetailView create(BasketRequest request) {
     BasketEntity basket = new BasketEntity();
     apply(basket, request, null);
     baskets.save(basket);
-    return toDetail(basket);
+    return mapper.toDetail(basket);
   }
 
   public BasketDetailView update(UUID id, BasketRequest request) {
@@ -136,36 +138,11 @@ public class BasketService {
   }
 
   private BasketSummaryView toSummary(BasketEntity entity) {
-    return new BasketSummaryView(
-        entity.getId(),
-        entity.getSlug(),
-        entity.getTitle(),
-        entity.getCategory(),
-        entity.getPrompt(),
-        entity.getTags(),
-        entity.getPrice(),
-        entity.getStock(),
-        entity.getHeroImage(),
-        entity.getCreatedAt(),
-        entity.getUpdatedAt()
-    );
+    return mapper.toSummary(entity);
   }
 
   private BasketDetailView toDetail(BasketEntity entity) {
-    return new BasketDetailView(
-        entity.getId(),
-        entity.getSlug(),
-        entity.getTitle(),
-        entity.getCategory(),
-        entity.getPrompt(),
-        entity.getTags(),
-        entity.getPrice(),
-        entity.getStock(),
-        entity.getHeroImage(),
-        entity.getCreatedAt(),
-        entity.getUpdatedAt(),
-        entity.getDescription()
-    );
+    return mapper.toDetail(entity);
   }
 
   public record BasketRequest(

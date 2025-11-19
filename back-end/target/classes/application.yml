@@ -19,4 +19,8 @@ spring:
 app:
   vat-rate: 0.19
   security:
-    jwt-secret: change-me-in-env
+    jwt-secret: change-me-in-env-change-me-in-env-please-update
+    jwt-expiration-seconds: 604800
+  admin:
+    email: admin@baskitup.com
+    password: change-me-admin

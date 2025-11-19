@@ -12,6 +12,9 @@ export const fetchBaskets = async (params?: { category?: string; search?: string
 export const fetchBasketBySlug = async (slug: string) =>
   apiRequest<BasketDetail>(`/baskets/${slug}`);
 
+export const fetchFeaturedBaskets = async () =>
+  apiRequest<BasketSummary[]>("/featured");
+
 export const createBasket = async (payload: BasketPayload, token: string) =>
   apiRequest<BasketDetail>("/admin/baskets", {
     method: "POST",

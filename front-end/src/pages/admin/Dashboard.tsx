@@ -14,6 +14,7 @@ import { BasketSummary, BasketPayload } from "@/types/basket";
 import { toast } from "sonner";
 import { fetchBasketBySlug } from "@/lib/baskets";
 import { Link } from "react-router-dom";
+import { slugify } from "@/lib/utils";
 
 type BasketFormValues = Omit<BasketPayload, "tags"> & { tagsInput: string };
 
@@ -138,14 +139,23 @@ const AdminDashboard = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Toate Produsele</CardTitle>
-                <Button
-                  onClick={() => {
-                    setEditingBasket(null);
-                    setDialogOpen(true);
-                  }}
-                >
-                  Adaugă Produs Nou
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleGenerateTestBasket}
+                    disabled={createMutation.isPending}
+                  >
+                    Generează coș demo
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setEditingBasket(null);
+                      setDialogOpen(true);
+                    }}
+                  >
+                    Adaugă Produs Nou
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
@@ -360,6 +370,17 @@ const AdminDashboard = () => {
     }
   }
 
+  async function handleGenerateTestBasket() {
+    const payload = buildDemoBasketPayload();
+    try {
+      await createMutation.mutateAsync(payload);
+      toast.success(`Coș demo "${payload.title}" creat.`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Nu am putut crea coșul demo.";
+      toast.error(message);
+    }
+  }
+
   async function handleDelete(id: string) {
     if (!confirm("Sigur vrei să ștergi acest coș?")) return;
     try {
@@ -373,3 +394,49 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+
+function buildDemoBasketPayload(): BasketPayload {
+  const themes = [
+    {
+      title: "Coș Demo Crăciun",
+      category: "Sărbători",
+      prompt: "Selecție festivă cu vin fiert, biscuiți și decorațiuni de sezon.",
+      tags: ["Craciun", "Holiday", "Cozy"],
+      description: "<p>Include vin roșu aromatizat, biscuiți cu scorțișoară, lumânare parfumată și o decorațiune handmade.</p>",
+      price: 249.9,
+      heroImage: "https://images.unsplash.com/photo-1481833761820-0509d3217039",
+    },
+    {
+      title: "Coș Demo Valentine",
+      category: "Valentine's Day",
+      prompt: "Cadou romantic cu prosecco și trufe belgiene.",
+      tags: ["Valentine", "Love", "Romantic"],
+      description: "<p>Prosecco, trufe cu cacao, lumânări parfumate și un buchet de flori uscate.</p>",
+      price: 219.0,
+      heroImage: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85",
+    },
+    {
+      title: "Coș Demo Corporate",
+      category: "Corporate",
+      prompt: "Pachet premium cu cafea de specialitate și praline pentru clienți business.",
+      tags: ["Corporate", "Premium"],
+      description: "<p>Conține ceai negru, cafea de specialitate, jurnal din piele ecologică și caramel sărat.</p>",
+      price: 289.5,
+      heroImage: "https://images.unsplash.com/photo-1487611459768-bd414656ea10",
+    },
+  ];
+  const randomTheme = themes[Math.floor(Math.random() * themes.length)];
+  const suffix = Math.random().toString(36).slice(2, 6);
+  const title = `${randomTheme.title} #${suffix.toUpperCase()}`;
+  return {
+    title,
+    slug: `${slugify(randomTheme.title)}-${suffix}`,
+    category: randomTheme.category,
+    prompt: randomTheme.prompt,
+    price: Number(randomTheme.price.toFixed(2)),
+    stock: 10 + Math.floor(Math.random() * 20),
+    tags: randomTheme.tags,
+    description: randomTheme.description,
+    heroImage: randomTheme.heroImage,
+  };
+}
