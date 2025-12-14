@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { BasketSummary } from "@/types/basket";
+import { useCart } from "@/lib/cart";
+import { toast } from "sonner";
 
 interface ProductCardProps {
   product: BasketSummary;
@@ -11,6 +13,7 @@ interface ProductCardProps {
 export const ProductCard = ({ product }: ProductCardProps) => {
   const lowStock = product.stock < 5;
   const cover = product.heroImage;
+  const { addItem } = useCart();
 
   return (
     <Link to={`/product/${product.slug}`}>
@@ -65,7 +68,11 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               className="rounded-full shadow-soft hover:shadow-medium transition-all"
               onClick={(e) => {
                 e.preventDefault();
-                // Add to cart logic
+                e.stopPropagation();
+                addItem(product, 1);
+                toast.success("Adăugat în coș", {
+                  description: `${product.title} a fost adăugat.`,
+                });
               }}
             >
               <ShoppingCart className="h-4 w-4" />

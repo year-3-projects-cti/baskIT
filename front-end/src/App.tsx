@@ -1,4 +1,5 @@
 import { AuthProvider } from "@/lib/auth";
+import { CartProvider } from "@/lib/cart";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,40 +30,64 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <div className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-1">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/catalog" element={<Catalog />} />
-                <Route path="/product/:slug" element={<ProductDetail />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/track" element={<OrderTracking />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/faq" element={<FAQ />} />
+        <CartProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <div className="flex flex-col min-h-screen">
+              <Header />
+              <main className="flex-1">
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/catalog" element={<Catalog />} />
+                  <Route path="/product/:slug" element={<ProductDetail />} />
+                  <Route path="/cart" element={<Cart />} />
                 <Route
-                  path="/admin"
+                  path="/checkout"
                   element={
-                    <ProtectedRoute roles={["ADMIN", "CONTENT_MANAGER"]}>
-                      <AdminDashboard />
+                    <ProtectedRoute>
+                      <Checkout />
                     </ProtectedRoute>
                   }
                 />
-                <Route path="/unauthorized" element={<Unauthorized />} />
-                <Route path="*" element={<NotFound />} />
-                <Route path='/login' element={<Login />} />
-                <Route path='/register' element={<Register />} />
-                
-              </Routes>
-            </main>
-            <Footer />
-          </div>
-        </BrowserRouter>
+                  <Route
+                    path="/track"
+                    element={
+                      <ProtectedRoute>
+                        <OrderTracking />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/orders"
+                    element={
+                      <ProtectedRoute>
+                        <OrderTracking />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/faq" element={<FAQ />} />
+                  <Route
+                    path="/admin"
+                    element={
+                      <ProtectedRoute roles={["ADMIN", "CONTENT_MANAGER"]}>
+                        <AdminDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/unauthorized" element={<Unauthorized />} />
+                  <Route path="*" element={<NotFound />} />
+                  <Route path='/login' element={<Login />} />
+                  <Route path='/register' element={<Register />} />
+                  
+                </Routes>
+              </main>
+              <Footer />
+            </div>
+          </BrowserRouter>
+        </CartProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

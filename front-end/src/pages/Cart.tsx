@@ -3,35 +3,14 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Link } from "react-router-dom";
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
+import { useCart } from "@/lib/cart";
+import { toast } from "sonner";
 
 const Cart = () => {
-  // Mock cart - in real app, this would come from state/context
-  const cartItems = [
-    {
-      id: "1",
-      name: "Crăciun Clasic",
-      price: 249.99,
-      quantity: 2,
-      image: "",
-      stock: 15,
-    },
-    {
-      id: "2",
-      name: "Love & Roses",
-      price: 299.99,
-      quantity: 1,
-      image: "",
-      stock: 8,
-    },
-  ];
+  const { items, updateQuantity, removeItem, getTotals } = useCart();
+  const { subtotal, shipping, vat, total } = getTotals("standard");
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = 25.00;
-  const vatRate = 0.19;
-  const vat = (subtotal + shipping) * vatRate;
-  const total = subtotal + shipping + vat;
-
-  if (cartItems.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center py-16">
         <div className="text-center">
@@ -58,13 +37,13 @@ const Cart = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
-            {cartItems.map((item) => (
+            {items.map((item) => (
               <div key={item.id} className="glass-card rounded-2xl p-6">
                 <div className="flex gap-6">
                   {/* Image */}
                   <div className="w-24 h-24 rounded-xl bg-secondary/30 flex-shrink-0 overflow-hidden">
-                    {item.image ? (
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    {item.heroImage ? (
+                      <img src={item.heroImage} alt={item.title} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-3xl">
                         🧺
@@ -74,8 +53,8 @@ const Cart = () => {
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <Link to={`/product/${item.id}`} className="font-semibold text-lg hover:text-primary transition-colors block mb-2">
-                      {item.name}
+                    <Link to={`/product/${item.slug}`} className="font-semibold text-lg hover:text-primary transition-colors block mb-2">
+                      {item.title}
                     </Link>
                     <p className="text-sm text-muted-foreground mb-4">
                       În stoc: {item.stock} bucăți
@@ -84,11 +63,22 @@ const Cart = () => {
                     <div className="flex items-center justify-between">
                       {/* Quantity Controls */}
                       <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon" className="h-8 w-8">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                        >
                           <Minus className="h-3 w-3" />
                         </Button>
                         <span className="w-12 text-center font-semibold">{item.quantity}</span>
-                        <Button variant="outline" size="icon" className="h-8 w-8">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => updateQuantity(item.id, Math.min(item.stock, item.quantity + 1))}
+                          disabled={item.quantity >= item.stock}
+                        >
                           <Plus className="h-3 w-3" />
                         </Button>
                       </div>
@@ -98,7 +88,15 @@ const Cart = () => {
                         <p className="text-xl font-bold text-primary">
                           {(item.price * item.quantity).toFixed(2)} RON
                         </p>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => {
+                            removeItem(item.id);
+                            toast.success("Produs eliminat din coș");
+                          }}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>

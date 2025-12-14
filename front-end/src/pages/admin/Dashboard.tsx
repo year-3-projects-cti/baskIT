@@ -8,13 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Package, ShoppingCart, TrendingUp, Users, Eye, Edit, Trash2 } from "lucide-react";
+import { Package, ShoppingCart, TrendingUp, Users, Eye, Edit, Trash2, Mail, CheckCircle } from "lucide-react";
 import { useBaskets, useBasketMutations } from "@/hooks/useBaskets";
 import { BasketSummary, BasketPayload } from "@/types/basket";
 import { toast } from "sonner";
 import { fetchBasketBySlug } from "@/lib/baskets";
 import { Link } from "react-router-dom";
 import { slugify } from "@/lib/utils";
+import { useCart, type OrderStatus, type OrderRecord } from "@/lib/cart";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type BasketFormValues = Omit<BasketPayload, "tags"> & { tagsInput: string };
 
@@ -33,10 +35,18 @@ const defaultFormValues: BasketFormValues = {
 const AdminDashboard = () => {
   const { data: baskets = [], isLoading } = useBaskets();
   const { createMutation, updateMutation, deleteMutation } = useBasketMutations();
+  const { allOrders, updateOrderStatus, recordEmail } = useCart();
+  const statusLabels: Record<OrderStatus, string> = {
+    processing: "În procesare",
+    shipped: "Predată curierului",
+    delivered: "Livrată",
+    canceled: "Anulată",
+  };
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [editingBasket, setEditingBasket] = useState<BasketSummary | null>(null);
   const form = useForm<BasketFormValues>({ defaultValues: defaultFormValues });
   const [isDetailLoading, setDetailLoading] = useState(false);
+  const [emailDrafts, setEmailDrafts] = useState<Record<string, { subject: string; message: string }>>({});
 
   useEffect(() => {
     let active = true;
@@ -70,9 +80,35 @@ const AdminDashboard = () => {
     };
   }, [editingBasket, form]);
 
+  const orders = allOrders;
   const lowStockProducts = baskets.filter((p) => p.stock < 5);
-  const totalRevenue = baskets.reduce((sum, basket) => sum + basket.price * Math.max(basket.stock, 0), 0);
-  const totalOrders = 0;
+  const totalRevenue = allOrders.reduce((sum, order) => sum + order.totals.total, 0);
+  const totalOrders = allOrders.length;
+
+  const handleStatusChange = (orderId: string, status: string) => {
+    updateOrderStatus(orderId, status as OrderStatus);
+    toast.success("Status comandă actualizat");
+  };
+
+  const updateEmailDraft = (orderId: string, patch: Partial<{ subject: string; message: string }>) => {
+    setEmailDrafts((prev) => {
+      const order = orders.find((o) => o.id === orderId);
+      const base = prev[orderId] ?? buildEmailDraft(order);
+      return { ...prev, [orderId]: { ...base, ...patch } };
+    });
+  };
+
+  const handleSendEmail = (orderId: string) => {
+    const order = orders.find((o) => o.id === orderId);
+    if (!order) return;
+    if (!order.customer?.email) {
+      toast.error("Comanda nu are email de contact.");
+      return;
+    }
+    const draft = emailDrafts[orderId] ?? buildEmailDraft(order);
+    recordEmail(orderId, draft.subject.trim(), draft.message.trim());
+    toast.success(`Email trimis către ${order.customer.email}`);
+  };
 
   return (
     <div className="min-h-screen bg-secondary/20 py-8">
@@ -225,9 +261,118 @@ const AdminDashboard = () => {
                 <CardTitle>Comenzi Recente</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="rounded-xl border border-dashed p-6 text-center text-muted-foreground">
-                  Fluxul de comenzi va fi conectat după implementarea checkout-ului real.
-                </div>
+                {orders.length === 0 ? (
+                  <div className="rounded-xl border border-dashed p-6 text-center text-muted-foreground">
+                    Nu există încă comenzi plasate.
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {orders.map((order) => {
+                      const statusBadge =
+                        order.status === "delivered"
+                          ? "bg-emerald-100 text-emerald-800"
+                          : order.status === "shipped"
+                          ? "bg-blue-100 text-blue-800"
+                          : order.status === "canceled"
+                          ? "bg-destructive/20 text-destructive"
+                          : "bg-amber-100 text-amber-800";
+                      const draft = emailDrafts[order.id] ?? buildEmailDraft(order);
+                      return (
+                        <div key={order.id} className="rounded-2xl border p-4 shadow-sm bg-card">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
+                            <div>
+                              <p className="text-xs text-muted-foreground uppercase">Comanda</p>
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-lg">{order.number}</span>
+                                <Badge className={statusBadge}>{statusLabels[order.status]}</Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {order.customer?.name || "Client"} • {order.customer?.email || "email nedefinit"}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm text-muted-foreground">Total</p>
+                              <p className="font-bold text-primary">{order.totals.total.toFixed(2)} RON</p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                              <Label>Status comandă</Label>
+                              <Select
+                                value={order.status}
+                                onValueChange={(value) => handleStatusChange(order.id, value)}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="processing">În procesare</SelectItem>
+                                  <SelectItem value="shipped">Predată curierului</SelectItem>
+                                  <SelectItem value="delivered">Livrată</SelectItem>
+                                  <SelectItem value="canceled">Anulată</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label>Trimite email către client</Label>
+                              <Input
+                                placeholder="Subiect"
+                                value={draft.subject}
+                                onChange={(e) => updateEmailDraft(order.id, { subject: e.target.value })}
+                              />
+                              <Textarea
+                                rows={3}
+                                placeholder="Mesaj"
+                                value={draft.message}
+                                onChange={(e) => updateEmailDraft(order.id, { message: e.target.value })}
+                              />
+                              <div className="flex justify-end">
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleSendEmail(order.id)}
+                                  disabled={!order.customer?.email}
+                                >
+                                  <Mail className="h-4 w-4 mr-2" />
+                                  Trimite email
+                                </Button>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label>Produse</Label>
+                              <div className="rounded-lg border p-3 space-y-2 max-h-40 overflow-auto">
+                                {order.items.map((item) => (
+                                  <div key={item.id} className="flex items-center justify-between text-sm">
+                                    <span>{item.title} x{item.quantity}</span>
+                                    <span className="font-semibold">{(item.price * item.quantity).toFixed(2)} RON</span>
+                                  </div>
+                                ))}
+                              </div>
+                              {order.emailHistory.length > 0 && (
+                                <div className="rounded-lg border p-3">
+                                  <div className="flex items-center gap-2 mb-2 text-sm font-semibold">
+                                    <Mail className="h-4 w-4" />
+                                    Ultimele emailuri
+                                  </div>
+                                  <div className="space-y-1 text-xs text-muted-foreground max-h-24 overflow-auto">
+                                    {order.emailHistory.map((log) => (
+                                      <div key={log.id} className="flex items-center justify-between">
+                                        <span className="truncate">{log.subject}</span>
+                                        <span>{new Date(log.createdAt).toLocaleDateString()}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -394,6 +539,20 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+
+function buildEmailDraft(order?: OrderRecord) {
+  const number = order?.number ?? "comanda ta";
+  return {
+    subject: `Actualizare pentru ${number}`,
+    message: `Bună ziua,
+
+Vă mulțumim pentru alegerea Bask IT Up!
+Statusul pentru ${number} este acum: ${order?.status ?? "în procesare"}.
+
+Cu drag,
+Echipa Bask IT Up`,
+  };
+}
 
 function buildDemoBasketPayload(): BasketPayload {
   const themes = [

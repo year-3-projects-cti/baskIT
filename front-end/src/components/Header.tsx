@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useCart } from "@/lib/cart";
 
 const navLinks = [
   { label: "Coșuri Cadou", to: "/catalog" },
@@ -14,7 +15,7 @@ const navLinks = [
 ];
 
 export const Header = () => {
-  const [cartCount] = useState(0);
+  const { itemCount } = useCart();
   const navigate = useNavigate();
   const promoDetails = useMemo(
     () => [
@@ -82,9 +83,9 @@ export const Header = () => {
               onClick={() => navigate("/cart")}
             >
               <ShoppingCart className="h-5 w-5" />
-              {cartCount > 0 && (
+              {itemCount > 0 && (
                 <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center rounded-full p-0 text-xs">
-                  {cartCount}
+                  {itemCount}
                 </Badge>
               )}
             </Button>

@@ -60,7 +60,7 @@ const Home = () => {
                     Explorează Coșurile <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="border-white/60 text-white hover:bg-white/10">
+                <Button asChild size="lg" variant="outline" className="border-white/60 text-primary hover:bg-white/10">
                   <Link to="/about">Despre Noi</Link>
                 </Button>
               </div>
@@ -74,7 +74,7 @@ const Home = () => {
                       <stat.icon className="h-6 w-6" />
                     </div>
                     <div>
-                      <p className="text-sm uppercase tracking-wide text-white/70">{stat.label}</p>
+                      <p className="text-sm uppercase tracking-wide text-primary">{stat.label}</p>
                       <p className="text-2xl font-semibold">{stat.value}</p>
                     </div>
                   </div>

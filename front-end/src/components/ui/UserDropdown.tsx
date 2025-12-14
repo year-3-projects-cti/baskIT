@@ -46,7 +46,7 @@ export const UserDropdown = () => {
           <span className="text-xs text-muted-foreground capitalize">{user.role.toLowerCase().replace(/_/g, " ")}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate("/track")}>Comenzile mele</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate("/orders")}>Comenzile mele</DropdownMenuItem>
         {canAccessAdmin && (
           <DropdownMenuItem onClick={() => navigate("/admin")}>Zona administrativă</DropdownMenuItem>
         )}
@@ -56,4 +56,3 @@ export const UserDropdown = () => {
     </DropdownMenu>
   );
 };
-

@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronLeft, ShoppingCart, Heart, Share2, Truck, Shield, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useBasketDetail } from "@/hooks/useBaskets";
+import { useCart } from "@/lib/cart";
 
 const ProductDetail = () => {
   const { slug } = useParams();
@@ -16,6 +17,7 @@ const ProductDetail = () => {
   const [giftNote, setGiftNote] = useState("");
   const [showBasketAnimation, setShowBasketAnimation] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { addItem } = useCart();
 
   useEffect(() => {
     return () => {
@@ -27,6 +29,7 @@ const ProductDetail = () => {
 
   const addToCart = () => {
     if (!product) return;
+    addItem(product, quantity);
     toast.success("Adăugat în coș!", {
       description: `${product.title} x${quantity}`,
     });
