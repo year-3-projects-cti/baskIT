@@ -15,9 +15,9 @@ public class FakePaymentAdapter implements PaymentPort {
   private static final Logger log = LoggerFactory.getLogger(FakePaymentAdapter.class);
 
   @Override
-  public String createPaymentIntent(UUID orderId, int amountRon) {
-    String token = "pi_" + orderId + "_" + amountRon;
-    log.info("Simulating payment intent for order {} amount {} -> {}", orderId, amountRon, token);
+  public String createPaymentIntent(UUID orderId, int amountMinorUnits) {
+    String token = "pi_" + orderId + "_" + amountMinorUnits;
+    log.info("Simulating payment intent for order {} amount (bani) {} -> {}", orderId, amountMinorUnits, token);
     return token;
   }
 

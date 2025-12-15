@@ -1,14 +1,51 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronLeft, ShoppingCart, Heart, Share2, Truck, Shield, Check } from "lucide-react";
+import {
+  ChevronLeft,
+  ShoppingCart,
+  Heart,
+  Share2,
+  Truck,
+  Shield,
+  Check,
+  Sparkles,
+  Gift,
+  Leaf,
+  Coffee,
+  Crown,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useBasketDetail } from "@/hooks/useBaskets";
 import { useCart } from "@/lib/cart";
+
+const contentIconMap: Array<{ matcher: RegExp; icon: LucideIcon }> = [
+  { matcher: /(cafea|espresso|ceai|coffee|tea)/i, icon: Coffee },
+  { matcher: /(vin|prosecco|champagne|whisky|gin|băutur|drink|bautur)/i, icon: Gift },
+  { matcher: /(spa|relaxare|lumânar|arom|wellness|ulei)/i, icon: Leaf },
+  { matcher: /(ciocol|dulce|trufe|dessert|praline|biscui)/i, icon: Sparkles },
+  { matcher: /(premium|artizan|signature|deluxe|lux)/i, icon: Crown },
+];
+
+const pickIconForContent = (text: string): LucideIcon => {
+  const match = contentIconMap.find((entry) => entry.matcher.test(text));
+  return match?.icon ?? Sparkles;
+};
+
+const extractContentSummary = (html: string, tags: string[]): string[] => {
+  const listMatches = Array.from(html.matchAll(/<li[^>]*>(.*?)<\/li>/gis)).map((match) =>
+    match[1]?.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim()
+  );
+  const merged = [...listMatches, ...tags]
+    .map((entry) => entry?.trim())
+    .filter(Boolean) as string[];
+  return Array.from(new Set(merged));
+};
 
 const ProductDetail = () => {
   const { slug } = useParams();
@@ -42,6 +79,19 @@ const ProductDetail = () => {
     }, 2200);
   };
 
+  const basketContents = useMemo(() => {
+    const html = product?.descriptionHtml ?? "";
+    const tags = product?.tags ?? [];
+    const summary = extractContentSummary(html, tags);
+    const fallback = summary.length > 0 ? summary : ["Selecție gourmet curată manual"];
+    return fallback.slice(0, 6).map((label) => ({
+      label,
+      icon: pickIconForContent(label),
+    }));
+  }, [product?.descriptionHtml, product?.tags]);
+
+  const outOfStock = (product?.stock ?? 0) <= 0;
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-muted-foreground">
@@ -62,8 +112,6 @@ const ProductDetail = () => {
       </div>
     );
   }
-
-  const outOfStock = product.stock <= 0;
 
   return (
     <div className="min-h-screen py-8">
@@ -195,6 +243,27 @@ const ProductDetail = () => {
               <div className="text-center p-4 glass-card rounded-xl">
                 <Check className="h-6 w-6 text-primary mx-auto mb-2" />
                 <p className="text-xs font-medium">100% Fresh</p>
+              </div>
+            </div>
+
+            {/* What's inside */}
+            <div className="glass-card rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-sm text-muted-foreground uppercase tracking-wide">Ce conține coșul</p>
+                  <h3 className="text-xl font-bold">What's inside</h3>
+                </div>
+                <Badge variant="outline">{basketContents.length} elemente</Badge>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {basketContents.map((entry) => (
+                  <div key={entry.label} className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-secondary/50 flex items-center justify-center text-primary">
+                      <entry.icon className="h-5 w-5" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">{entry.label}</p>
+                  </div>
+                ))}
               </div>
             </div>
 

@@ -47,6 +47,11 @@ export type OrderRecord = {
   emailHistory: EmailLog[];
 };
 
+type SeedOptions = {
+  includeCurrentUser?: boolean;
+  replaceExisting?: boolean;
+};
+
 type CartContextValue = {
   items: CartItem[];
   orders: OrderRecord[];
@@ -69,6 +74,7 @@ type CartContextValue = {
   }) => OrderRecord;
   updateOrderStatus: (id: string, status: OrderStatus) => void;
   recordEmail: (id: string, subject: string, message: string) => void;
+  seedDemoOrders: (orders: OrderRecord[], options?: SeedOptions) => void;
 };
 
 const CART_KEY = "baskit.cart.v3";
@@ -301,6 +307,43 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     [userKey]
   );
 
+  const seedDemoOrders: CartContextValue["seedDemoOrders"] = useCallback(
+    (orders, options) => {
+      const normalized = orders.map((order) =>
+        normalizeOrder({
+          ...order,
+          id: order.id ?? safeId(),
+          createdAt: order.createdAt ?? new Date().toISOString(),
+          items: order.items ?? [],
+          shippingMethod: order.shippingMethod ?? "standard",
+          totals:
+            order.totals ??
+            computeTotals(order.items ?? [], order.shippingMethod ?? "standard"),
+          emailHistory: order.emailHistory ?? [],
+        })
+      );
+
+      const bucket = readBucket<OrderRecord[]>(ORDER_KEY);
+      const nextBucket: Bucket<OrderRecord[]> = {
+        ...bucket,
+        byUser: { ...bucket.byUser, __demo__: normalized },
+      };
+
+      if (options?.includeCurrentUser) {
+        nextBucket.byUser[userKey] = options.replaceExisting
+          ? normalized
+          : [...normalized, ...(nextBucket.byUser[userKey] ?? [])];
+      }
+
+      writeBucket(ORDER_KEY, nextBucket);
+      setAllOrders(aggregateOrders(nextBucket));
+      if (options?.includeCurrentUser) {
+        setOrders((nextBucket.byUser[userKey] ?? []).map(normalizeOrder));
+      }
+    },
+    [userKey]
+  );
+
   const value = useMemo<CartContextValue>(
     () => ({
       items,
@@ -315,6 +358,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
       placeOrder,
       updateOrderStatus,
       recordEmail,
+      seedDemoOrders,
     }),
     [
       items,
@@ -329,6 +373,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
       placeOrder,
       updateOrderStatus,
       recordEmail,
+      seedDemoOrders,
     ]
   );
 

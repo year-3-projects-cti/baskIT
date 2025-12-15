@@ -107,6 +107,10 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -137,6 +141,38 @@ All colors MUST be HSL.
 
   .hover-scale:hover {
     transform: scale(1.02);
+  }
+
+  .lookbook-card {
+    position: relative;
+    min-height: 320px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    transition: transform 0.6s ease, box-shadow 0.6s ease;
+  }
+
+  .lookbook-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 1px solid hsl(var(--card-foreground) / 0.1);
+    pointer-events: none;
+  }
+
+  .lookbook-card:hover {
+    transform: translateY(-6px) scale(1.01);
+    box-shadow: var(--shadow-medium);
+  }
+
+  .page-transition-target {
+    will-change: opacity, transform;
+  }
+
+  body.page-transition-active .page-transition-target {
+    animation: pageFade 0.45s ease;
   }
 
   .animate-bounce-subtle {
@@ -370,4 +406,15 @@ All colors MUST be HSL.
   0% { transform: scale(0.4); opacity: 0; }
   50% { transform: scale(1.05); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pageFade {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
 }

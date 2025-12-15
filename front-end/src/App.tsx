@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { ScrollToTop } from "@/components/routing/ScrollToTop";
 import Home from "./pages/Home";
 import Catalog from "./pages/Catalog";
 import ProductDetail from "./pages/ProductDetail";
@@ -34,22 +35,23 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <ScrollToTop />
             <div className="flex flex-col min-h-screen">
               <Header />
-              <main className="flex-1">
+              <main className="flex-1 page-transition-target">
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/catalog" element={<Catalog />} />
                   <Route path="/product/:slug" element={<ProductDetail />} />
                   <Route path="/cart" element={<Cart />} />
-                <Route
-                  path="/checkout"
-                  element={
-                    <ProtectedRoute>
-                      <Checkout />
-                    </ProtectedRoute>
-                  }
-                />
+                  <Route
+                    path="/checkout"
+                    element={
+                      <ProtectedRoute>
+                        <Checkout />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route
                     path="/track"
                     element={
@@ -79,9 +81,8 @@ const App = () => (
                   />
                   <Route path="/unauthorized" element={<Unauthorized />} />
                   <Route path="*" element={<NotFound />} />
-                  <Route path='/login' element={<Login />} />
-                  <Route path='/register' element={<Register />} />
-                  
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
                 </Routes>
               </main>
               <Footer />

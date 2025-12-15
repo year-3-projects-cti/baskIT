@@ -1,4 +1,48 @@
-import { Heart, Users, Award, Leaf } from "lucide-react";
+import { Heart, Users, Award, Leaf, TrendingUp, Clock3, ShieldCheck, Sparkles } from "lucide-react";
+
+const impactMetrics = [
+  {
+    label: "Comenzi procesate în demo",
+    value: "1.2k",
+    description: "Simulări Stripe + timeline complet",
+    icon: TrendingUp,
+  },
+  {
+    label: "Timp mediu demo complet",
+    value: "08:30",
+    description: "De la storefront la fulfilment",
+    icon: Clock3,
+  },
+  {
+    label: "Automatizări acoperite",
+    value: "7 fluxuri",
+    description: "Catalogue, checkout, livrare, audit",
+    icon: ShieldCheck,
+  },
+];
+
+const roadmap = [
+  {
+    year: "2022",
+    title: "MVP & validare",
+    description: "Primele colecții + integrare Stripe pentru plăți sigure.",
+  },
+  {
+    year: "2023",
+    title: "Automatizare fulfilment",
+    description: "State machine pe comenzi și webhook-uri pentru livrare.",
+  },
+  {
+    year: "2024",
+    title: "Experiență demo + analytics",
+    description: "Seed demo data cu un click și dashboard operațional.",
+  },
+  {
+    year: "2025",
+    title: "Build-your-own & abonamente",
+    description: "Roadmap public pentru următoarea etapă.",
+  },
+];
 
 const About = () => {
   return (
@@ -33,6 +77,20 @@ const About = () => {
               pentru a crea amintiri de neuitat.
             </p>
           </div>
+        </div>
+
+        {/* Metrics */}
+        <div className="max-w-5xl mx-auto mb-16 grid grid-cols-1 md:grid-cols-3 gap-6">
+          {impactMetrics.map((metric) => (
+            <div key={metric.label} className="glass-card rounded-2xl p-6">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4">
+                <metric.icon className="h-5 w-5" />
+              </div>
+              <p className="text-sm uppercase tracking-wide text-muted-foreground">{metric.label}</p>
+              <p className="text-4xl font-bold text-primary mt-2">{metric.value}</p>
+              <p className="text-sm text-muted-foreground mt-1">{metric.description}</p>
+            </div>
+          ))}
         </div>
 
         {/* Values */}
@@ -75,6 +133,31 @@ const About = () => {
                 Preferăm producători locali și ambalaje eco-friendly
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* Roadmap */}
+        <div className="max-w-4xl mx-auto mt-16">
+          <div className="text-center mb-8">
+            <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">Roadmap</p>
+            <h2 className="text-3xl font-bold">Evoluție și ce urmează</h2>
+          </div>
+          <div className="glass-card rounded-3xl p-8 space-y-6">
+            {roadmap.map((entry, index) => (
+              <div key={entry.year} className="flex flex-col md:flex-row md:items-center gap-4">
+                <div className="flex items-center gap-3 min-w-[120px]">
+                  <div className="w-12 h-12 rounded-2xl bg-secondary/60 flex items-center justify-center font-bold">
+                    {entry.year}
+                  </div>
+                  <Sparkles className="h-5 w-5 text-accent hidden md:block" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold">{entry.title}</h3>
+                  <p className="text-muted-foreground">{entry.description}</p>
+                </div>
+                {index < roadmap.length - 1 && <div className="hidden md:block w-px h-10 bg-border" />}
+              </div>
+            ))}
           </div>
         </div>
 

@@ -1,9 +1,5 @@
 # Milestone 3 – Architecture Exploration
 
-This document evaluates three alternative software architectures for **Bask IT Up!**, targeting the Grade 10 rubric: detailed descriptions tailored to the project, explicit component & deployment narratives (with diagram placeholders), thorough pros/cons, and a convincing final recommendation. Diagrams will be inserted after review as requested.
-
----
-
 ## 1. Monolithic Architecture
 
 ### Structure, Components, and Data Flow
