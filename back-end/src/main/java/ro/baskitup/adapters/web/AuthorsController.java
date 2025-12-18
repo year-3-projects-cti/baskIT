@@ -6,9 +6,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
-public class HealthController {
-  @GetMapping("/api/health")
-  public Map<String, Object> health() {
-    return Map.of("status", "OK");
+public class AuthorsController {
+  @GetMapping("/api/authors")
+  public Map<String, Object> authors() {
+    return Map.of("authors", "Prodan Mihai & Dumitru Vlad");
   }
 }

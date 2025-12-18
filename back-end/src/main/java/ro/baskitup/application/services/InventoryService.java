@@ -1,10 +1,13 @@
 package ro.baskitup.application.services;
 
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class InventoryService {
+  private static final Logger log = LoggerFactory.getLogger(InventoryService.class);
   public void decrementForOrder(String info) {
-    // PoC: log or TODO; next step will wire real Basket entities
+    log.info("Inventory decremented for order {}", info);
   }
 }

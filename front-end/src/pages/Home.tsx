@@ -215,7 +215,7 @@ const Home = () => {
           <div className="flex flex-col-reverse lg:flex-row items-center gap-12">
             <div className="w-full lg:w-1/2 text-center lg:text-left">
               <Badge className="mb-6 border-white/40 bg-white/10 text-white shadow-soft">
-                🎁 Bask IT Up! – Artizanați în București
+                🎁 Bask IT Up! - Artizanați în București
               </Badge>
               <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight tracking-tight text-white">
                 Coșuri Cadou Curate Pentru Fiecare Moment Special

@@ -15,6 +15,14 @@ spring:
   h2:
     console:
       enabled: true
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        auto-startup: ${SPRING_RABBITMQ_LISTENER_SIMPLE_AUTO_STARTUP:true}
 
 app:
   vat-rate: 0.19
@@ -24,3 +32,5 @@ app:
   admin:
     email: admin@baskitup.com
     password: change-me-admin
+  rabbitmq:
+    order-paid-queue: order-paid

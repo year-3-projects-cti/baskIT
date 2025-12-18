@@ -10,7 +10,17 @@ The storefront automatically showcases **seasonal featured baskets** without red
 * *PRODAN Florin Mihai Alexandru* - 1241EA
 * *DUMITRU Vlad Andrei* - 1241EA
 
+## Message Queue (RabbitMQ)
 
+- Docker Compose now boots RabbitMQ (with management UI) on `localhost:5672` (UI: `localhost:15672`).
+- The backend publishes `OrderPaid` events to the `order-paid` queue via a RabbitMQ-based `DomainEventBus`, and an async consumer updates inventory, decoupling checkout from stock mutations.
+- Configure with `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_USERNAME`, `RABBITMQ_PASSWORD` (defaults target the local Docker service). The queue is auto-created on startup.
+- To pause the consumer (so messages stay in the queue for inspection), start the backend with `SPRING_RABBITMQ_LISTENER_SIMPLE_AUTO_STARTUP=false`, then re-enable by omitting the env or setting it to `true`.
+
+## CI/CD (GitHub Actions)
+
+- Workflow: `.github/workflows/ci.yml` runs on every push/PR. Jobs: backend Maven package (skip tests), frontend `npm run build`, and a Docker Compose build for the images.
+- Run locally: `cd back-end && mvn -ntp -DskipTests package`, `cd front-end && npm ci && npm run build`, `docker compose build`.
 
 ## Running with Docker
 
@@ -24,6 +34,12 @@ Services:
 
 - Front-end (Nginx serving the Vite build) → http://localhost:5173
 - Back-end (Spring Boot) → http://localhost:8080
+- RabbitMQ broker → amqp://localhost:5672 (UI on :15672)
+```
+  curl -X POST http://localhost:8080/api/orders                                                                                                                                                    
+  curl -X POST http://localhost:8080/api/orders/{id}/paid -H "Content-Type: application/json" -d '{"paymentRef":"TEST-REF"}'  
+
+```
 
 Stop everything via `docker compose down`. Adjust environment variables (Spring profiles, DB URLs, API keys) directly inside `docker-compose.yml` when needed.
 

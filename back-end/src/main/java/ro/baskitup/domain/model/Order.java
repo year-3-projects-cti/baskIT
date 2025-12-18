@@ -71,6 +71,7 @@ public class Order {
   private Instant createdAt;
 
   @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @JsonIgnore
   private List<OrderItem> items = new ArrayList<>();
 
   @Transient
