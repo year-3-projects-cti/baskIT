@@ -37,7 +37,7 @@ const Checkout = () => {
     }
   }, [items, navigate]);
 
-  const handlePlaceOrder = (event: React.FormEvent<HTMLFormElement>) => {
+  const handlePlaceOrder = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!items.length) {
       toast.error("Coșul tău este gol.");
@@ -65,21 +65,27 @@ const Checkout = () => {
       .map((part) => (part ? String(part) : ""))
       .filter(Boolean);
 
-    const order = placeOrder({
-      shippingMethod,
-      note: giftNote || deliveryNotes,
-      customer: {
-        name: customerName,
-        email,
-        phone,
-        address: addressParts.join(", "),
-      },
-    });
-
-    toast.success("Comanda a fost plasată!", {
-      description: `Număr comandă ${order.number}`,
-    });
-    navigate("/orders", { state: { highlight: order.id } });
+    try {
+      const order = await placeOrder({
+        shippingMethod,
+        note: giftNote || deliveryNotes,
+        customer: {
+          name: customerName,
+          email,
+          phone,
+          address: addressParts.join(", "),
+        },
+      });
+      console.log("Order saved (local + backend):", order);
+      toast.success("Comanda a fost plasată!", {
+        description: `Număr comandă ${order.number}`,
+      });
+      navigate("/orders", { state: { highlight: order.id } }); 
+    } catch (error) {
+      console.error("Eroare la plasarea comenzii", error);
+      const message = error instanceof Error ? error.message : "Nu am putut salva comanda.";
+      toast.error(message);
+    }
   };
 
   return (

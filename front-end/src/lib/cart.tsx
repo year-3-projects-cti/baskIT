@@ -1,6 +1,7 @@
 import { BasketDetail, BasketSummary } from "@/types/basket";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { fetchOrderBuckets, persistOrderSnapshot, updateOrderStatusApi, type OrderDto } from "@/lib/orders";
 
 export type CartItem = {
   id: string;
@@ -47,11 +48,6 @@ export type OrderRecord = {
   emailHistory: EmailLog[];
 };
 
-type SeedOptions = {
-  includeCurrentUser?: boolean;
-  replaceExisting?: boolean;
-};
-
 type CartContextValue = {
   items: CartItem[];
   orders: OrderRecord[];
@@ -71,15 +67,16 @@ type CartContextValue = {
     shippingMethod?: ShippingMethod;
     note?: string;
     customer?: OrderRecord["customer"];
-  }) => OrderRecord;
+  }) => Promise<OrderRecord>;
   updateOrderStatus: (id: string, status: OrderStatus) => void;
   recordEmail: (id: string, subject: string, message: string) => void;
-  seedDemoOrders: (orders: OrderRecord[], options?: SeedOptions) => void;
+  seedDemoOrders: (
+    orders: OrderRecord[],
+    options?: { includeCurrentUser?: boolean; replaceExisting?: boolean }
+  ) => void;
 };
 
 const CART_KEY = "baskit.cart.v3";
-const ORDER_KEY = "baskit.orders.v3";
-
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 const shippingCost = (method: ShippingMethod) => (method === "express" ? 35 : 25);
@@ -109,77 +106,85 @@ const normalizeOrder = (order: OrderRecord): OrderRecord => ({
   items: order.items ?? [],
 });
 
-const aggregateOrders = (bucket: { byUser: Record<string, OrderRecord[]> }): OrderRecord[] => {
-  return Object.values(bucket.byUser ?? {})
-    .flat()
-    .map(normalizeOrder)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+const mapOrderDtoToRecord = (dto: OrderDto, fallbackItems?: CartItem[]): OrderRecord => {
+  const items = (dto.items && dto.items.length ? dto.items : fallbackItems ?? []).map((item) => ({
+    id: item.id,
+    slug: item.slug ?? item.id,
+    title: item.title,
+    price: Number(item.price),
+    quantity: item.quantity,
+    stock: item.quantity,
+    heroImage: item.heroImage ?? undefined,
+  }));
+  const totals = dto.totals ?? {};
+  return normalizeOrder({
+    id: dto.id,
+    number: dto.number,
+    createdAt: dto.createdAt,
+    status: (dto.status as OrderStatus) ?? "processing",
+    shippingMethod: (dto.shippingMethod as ShippingMethod) ?? "standard",
+    note: dto.note ?? undefined,
+    customer: dto.customer ?? undefined,
+    totals: {
+      subtotal: Number(totals.subtotal ?? 0),
+      shipping: Number(totals.shipping ?? 0),
+      vat: Number(totals.vat ?? 0),
+      total: Number(totals.total ?? 0),
+    },
+    items,
+    emailHistory: [],
+  });
 };
 
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   const userKey = user?.id || user?.email || "guest";
 
-  type Bucket<T> = { byUser: Record<string, T>; lastUserId?: string };
-  const readBucket = <T,>(key: string): Bucket<T> => {
+  type CartBucket = { byUser: Record<string, CartItem[]>; lastUserId?: string };
+  const readCartBucket = (): CartBucket => {
     if (typeof localStorage === "undefined") return { byUser: {} };
-    const raw = localStorage.getItem(key);
+    const raw = localStorage.getItem(CART_KEY);
     if (!raw) return { byUser: {} };
     try {
-      const parsed = JSON.parse(raw) as Bucket<T>;
+      const parsed = JSON.parse(raw) as CartBucket;
       return parsed?.byUser ? parsed : { byUser: {} };
     } catch {
       return { byUser: {} };
     }
   };
-  const writeBucket = <T,>(key: string, bucket: Bucket<T>) => {
+  const writeCartBucket = (bucket: CartBucket) => {
     if (typeof localStorage === "undefined") return;
-    localStorage.setItem(key, JSON.stringify(bucket));
+    localStorage.setItem(CART_KEY, JSON.stringify(bucket));
   };
 
-  const [items, setItems] = useState<CartItem[]>(() => {
-    const bucket = readBucket<CartItem[]>(CART_KEY);
-    return bucket.byUser[userKey] ?? [];
-  });
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [orders, setOrders] = useState<OrderRecord[]>([]);
+  const [allOrders, setAllOrders] = useState<OrderRecord[]>([]);
 
-  const [orders, setOrders] = useState<OrderRecord[]>(() => {
-    const bucket = readBucket<OrderRecord[]>(ORDER_KEY);
-    const stored = bucket.byUser[userKey] ?? [];
-    return stored.map(normalizeOrder);
-  });
-  const [allOrders, setAllOrders] = useState<OrderRecord[]>(() => {
-    const bucket = readBucket<OrderRecord[]>(ORDER_KEY);
-    return aggregateOrders(bucket);
-  });
-
-  const [hydratedUserKey, setHydratedUserKey] = useState(userKey);
-
-  useEffect(() => {
-    if (hydratedUserKey !== userKey) return;
-    const bucket = readBucket<CartItem[]>(CART_KEY);
-    bucket.byUser[userKey] = items;
-    bucket.lastUserId = userKey;
-    writeBucket(CART_KEY, bucket);
-  }, [items, userKey, hydratedUserKey]);
-
-  useEffect(() => {
-    if (hydratedUserKey !== userKey) return;
-    const bucket = readBucket<OrderRecord[]>(ORDER_KEY);
-    bucket.byUser[userKey] = orders;
-    bucket.lastUserId = userKey;
-    writeBucket(ORDER_KEY, bucket);
-    setAllOrders(aggregateOrders(bucket));
-  }, [orders, userKey, hydratedUserKey]);
+  const loadOrders = useCallback(async (targetUserKey: string) => {
+    const bucket = await fetchOrderBuckets();
+    const userOrders = (bucket[targetUserKey] ?? []).map((dto) => mapOrderDtoToRecord(dto));
+    setOrders(userOrders);
+    const merged = Object.values(bucket)
+      .flat()
+      .map((dto) => mapOrderDtoToRecord(dto))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    setAllOrders(merged);
+  }, []);
 
   useEffect(() => {
     // Reload data when user changes
-    const bucketItems = readBucket<CartItem[]>(CART_KEY);
-    setItems(bucketItems.byUser[userKey] ?? []);
-    const bucketOrders = readBucket<OrderRecord[]>(ORDER_KEY);
-    setOrders((bucketOrders.byUser[userKey] ?? []).map(normalizeOrder));
-    setAllOrders(aggregateOrders(bucketOrders));
-    setHydratedUserKey(userKey);
-  }, [userKey]);
+    const bucket = readCartBucket();
+    setItems(bucket.byUser[userKey] ?? []);
+    loadOrders(userKey).catch((err) => console.error("Nu am putut încărca comenzile din backend", err));
+  }, [userKey, loadOrders]);
+
+  useEffect(() => {
+    const bucket = readCartBucket();
+    bucket.byUser[userKey] = items;
+    bucket.lastUserId = userKey;
+    writeCartBucket(bucket);
+  }, [items, userKey]);
 
   const itemCount = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
 
@@ -233,56 +238,76 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     const method = params?.shippingMethod ?? "standard";
     const totals = computeTotals(items, method);
     const now = new Date();
-    const id = safeId();
-    const number = `BK-${now.getFullYear()}-${id.slice(-6).toUpperCase()}`;
-    const order: OrderRecord = {
-      id,
+    const number = `BK-${now.getFullYear()}-${Math.random().toString(16).slice(-6).toUpperCase()}`;
+    const payload = {
       number,
       createdAt: now.toISOString(),
       status: "processing",
       shippingMethod: method,
+      userKey,
       note: params?.note,
       customer: params?.customer,
       totals,
-      items,
-      emailHistory: [],
+      items: items.map((item) => ({
+        id: item.id,
+        slug: item.slug,
+        title: item.title,
+        price: item.price,
+        quantity: item.quantity,
+        heroImage: item.heroImage,
+      })),
     };
-    setOrders((prev) => [order, ...prev]);
-    clearCart();
-    return order;
-  }, [items, clearCart]);
+
+    return persistOrderSnapshot(payload)
+      .then((dto) => {
+        console.log("Order snapshot saved in backend:", dto);
+        const record = mapOrderDtoToRecord(dto, items);
+        setOrders((prev) => [record, ...prev]);
+        setAllOrders((prev) => [record, ...prev]);
+        clearCart();
+        return record;
+      })
+      .catch((err) => {
+        console.error("Nu am putut salva comanda în baza de date", err);
+        const fallback = normalizeOrder({
+          id: safeId(),
+          number,
+          createdAt: now.toISOString(),
+          status: "processing",
+          shippingMethod: method,
+          note: params?.note,
+          customer: params?.customer,
+          totals,
+          items,
+          emailHistory: [],
+        });
+        setOrders((prev) => [fallback, ...prev]);
+        setAllOrders((prev) => [fallback, ...prev]);
+        clearCart();
+        return fallback;
+      });
+  }, [items, clearCart, userKey]);
 
   const updateOrderStatus: CartContextValue["updateOrderStatus"] = useCallback(
-    (id, status) => {
-      const bucket = readBucket<OrderRecord[]>(ORDER_KEY);
-      const nextBucket: Bucket<OrderRecord[]> = { ...bucket, byUser: { ...bucket.byUser } };
-      let changed = false;
-
-      for (const key of Object.keys(nextBucket.byUser)) {
-        const currentOrders = nextBucket.byUser[key] ?? [];
-        const updated = currentOrders.map((order) => (order.id === id ? { ...order, status } : order));
-        if (updated.some((order, idx) => order !== currentOrders[idx])) {
-          nextBucket.byUser[key] = updated;
-          changed = true;
-        }
+    async (id, status) => {
+      try {
+        const updatedDto = await updateOrderStatusApi(id, status);
+        const updated = mapOrderDtoToRecord(updatedDto);
+        setAllOrders((prev) => prev.map((order) => (order.id === id ? updated : order)));
+        setOrders((prev) => prev.map((order) => (order.id === id ? updated : order)));
+        // refresh bucket to keep in sync with backend for Postman/API readers
+        await loadOrders(userKey);
+      } catch (err) {
+        console.error("Nu am putut actualiza statusul comenzii", err);
       }
-      if (!changed) return;
-      writeBucket(ORDER_KEY, nextBucket);
-      setAllOrders(aggregateOrders(nextBucket));
-      setOrders((nextBucket.byUser[userKey] ?? []).map(normalizeOrder));
     },
-    [userKey]
+    [loadOrders, userKey]
   );
 
   const recordEmail: CartContextValue["recordEmail"] = useCallback(
     (id, subject, message) => {
-      const bucket = readBucket<OrderRecord[]>(ORDER_KEY);
-      const nextBucket: Bucket<OrderRecord[]> = { ...bucket, byUser: { ...bucket.byUser } };
-      let changed = false;
-
-      for (const key of Object.keys(nextBucket.byUser)) {
-        const currentOrders = nextBucket.byUser[key] ?? [];
-        const updated = currentOrders.map((order) => {
+      setAllOrders((prev) =>
+        prev.map((order) => {
           if (order.id !== id) return order;
           const log: EmailLog = {
             id: safeId(),
@@ -292,24 +317,28 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
             createdAt: new Date().toISOString(),
           };
           return { ...order, emailHistory: [log, ...(order.emailHistory ?? [])] };
-        });
-        if (updated.some((order, idx) => order !== currentOrders[idx])) {
-          nextBucket.byUser[key] = updated;
-          changed = true;
-        }
-      }
-
-      if (!changed) return;
-      writeBucket(ORDER_KEY, nextBucket);
-      setAllOrders(aggregateOrders(nextBucket));
-      setOrders((nextBucket.byUser[userKey] ?? []).map(normalizeOrder));
+        })
+      );
+      setOrders((prev) =>
+        prev.map((order) => {
+          if (order.id !== id) return order;
+          const log: EmailLog = {
+            id: safeId(),
+            to: order.customer?.email || "unknown",
+            subject,
+            message,
+            createdAt: new Date().toISOString(),
+          };
+          return { ...order, emailHistory: [log, ...(order.emailHistory ?? [])] };
+        })
+      );
     },
-    [userKey]
+    []
   );
 
   const seedDemoOrders: CartContextValue["seedDemoOrders"] = useCallback(
-    (orders, options) => {
-      const normalized = orders.map((order) =>
+    (seedOrders, options) => {
+      const normalized = seedOrders.map((order) =>
         normalizeOrder({
           ...order,
           id: order.id ?? safeId(),
@@ -323,22 +352,12 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         })
       );
 
-      const bucket = readBucket<OrderRecord[]>(ORDER_KEY);
-      const nextBucket: Bucket<OrderRecord[]> = {
-        ...bucket,
-        byUser: { ...bucket.byUser, __demo__: normalized },
-      };
-
       if (options?.includeCurrentUser) {
-        nextBucket.byUser[userKey] = options.replaceExisting
-          ? normalized
-          : [...normalized, ...(nextBucket.byUser[userKey] ?? [])];
-      }
-
-      writeBucket(ORDER_KEY, nextBucket);
-      setAllOrders(aggregateOrders(nextBucket));
-      if (options?.includeCurrentUser) {
-        setOrders((nextBucket.byUser[userKey] ?? []).map(normalizeOrder));
+        const next = options.replaceExisting ? normalized : [...normalized, ...orders];
+        setOrders(next.map(normalizeOrder));
+        setAllOrders((prev) => [...next.map(normalizeOrder), ...prev]);
+      } else {
+        setAllOrders((prev) => [...normalized, ...prev]);
       }
     },
     [userKey]

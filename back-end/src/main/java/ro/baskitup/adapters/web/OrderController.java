@@ -1,10 +1,13 @@
 package ro.baskitup.adapters.web;
 
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import ro.baskitup.application.services.OrderService;
+import ro.baskitup.application.services.OrderSnapshotRequest;
 import ro.baskitup.domain.model.Order;
+import ro.baskitup.domain.view.OrderView;
+import ro.baskitup.domain.view.OrderView;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -17,14 +20,14 @@ public class OrderController {
 
   // GET /api/orders  -> list all (for debugging)
   @GetMapping
-  public List<Order> list() {
-    return service.list();
+  public java.util.Map<String, java.util.List<OrderView>> list() {
+    return service.listBucket();
   }
 
   // POST /api/orders -> create new
   @PostMapping
-  public Order create() {
-    return service.create();
+  public OrderView create(@Valid @RequestBody OrderSnapshotRequest request) {
+    return service.createSnapshot(request);
   }
 
   // POST /api/orders/{id}/paid
@@ -43,5 +46,10 @@ public class OrderController {
   @PostMapping("/{id}/cancel")
   public Order cancel(@PathVariable UUID id, @RequestBody Map<String, String> body) {
     return service.cancel(id, body.getOrDefault("reason", "user_request"));
+  }
+
+  @PostMapping("/{id}/status")
+  public ro.baskitup.domain.view.OrderView updateStatus(@PathVariable UUID id, @RequestBody Map<String, String> body) {
+    return service.updateStatus(id, body.getOrDefault("status", "processing"));
   }
 }

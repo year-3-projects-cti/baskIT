@@ -52,6 +52,11 @@ public class Order {
   @Column(name = "gift_note", length = 512)
   private String giftNote;
 
+  @Column(name = "client_key", length = 160)
+  private String clientKey;
+  @Column(name = "user_key", length = 160)
+  private String userKey;
+
   @Column(name = "total_amount", precision = 10, scale = 2, nullable = false)
   private BigDecimal totalAmount = BigDecimal.ZERO;
 
@@ -160,6 +165,22 @@ public class Order {
     this.giftNote = giftNote;
   }
 
+  public String getClientKey() {
+    return clientKey;
+  }
+
+  public void setClientKey(String clientKey) {
+    this.clientKey = clientKey;
+  }
+
+  public String getUserKey() {
+    return userKey;
+  }
+
+  public void setUserKey(String userKey) {
+    this.userKey = userKey;
+  }
+
   public BigDecimal getTotalAmount() {
     return totalAmount;
   }
@@ -204,6 +225,10 @@ public class Order {
     return createdAt;
   }
 
+  public void setCreatedAt(Instant createdAt) {
+    this.createdAt = createdAt;
+  }
+
   public List<OrderItem> getItems() {
     return items;
   }
@@ -219,7 +244,9 @@ public class Order {
 
   @PrePersist
   void onCreate() {
-    this.createdAt = Instant.now();
+    if (this.createdAt == null) {
+      this.createdAt = Instant.now();
+    }
     if (this.orderNumber == null) {
       this.orderNumber = "BK-" + this.createdAt.toEpochMilli();
     }

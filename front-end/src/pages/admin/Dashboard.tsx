@@ -200,55 +200,6 @@ const AdminDashboard = () => {
           <p className="text-muted-foreground">Gestionează produsele și comenzile</p>
         </div>
 
-        <div className="rounded-3xl bg-gradient-to-br from-primary to-orange-500 text-white p-6 md:p-8 mb-8 space-y-6 lg:space-y-0 lg:flex lg:items-center lg:justify-between">
-          <div className="space-y-3 max-w-2xl">
-            <p className="text-sm uppercase tracking-[0.35em] text-white/80">Demo mode</p>
-            <h2 className="text-3xl font-semibold leading-tight">
-              Pregătește un tur live cu date reale și timeline-uri vizuale.
-            </h2>
-            <p className="text-white/80">
-              Un singur click adaugă coșuri demo, comenzi istorice și emailuri automate pentru prezentări.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Button
-                className="bg-white text-primary hover:bg-white/90"
-                onClick={handleSeedDemoScenario}
-                disabled={createMutation.isPending}
-              >
-                <Sparkles className="h-4 w-4 mr-2" />
-                Încarcă scenariu demo
-              </Button>
-              <Button variant="ghost" className="text-white hover:bg-white/10" asChild>
-                <Link to="/">
-                  Vezi storefront
-                </Link>
-              </Button>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4 w-full max-w-md">
-            <div>
-              <p className="text-sm uppercase text-white/70">Backlog activ</p>
-              <p className="text-3xl font-bold">{backlog}</p>
-              <p className="text-xs text-white/70">Comenzi care așteaptă fulfilment</p>
-            </div>
-            <div>
-              <p className="text-sm uppercase text-white/70">Rată livrare</p>
-              <p className="text-3xl font-bold">{deliveryRate}%</p>
-              <p className="text-xs text-white/70">În ultimele 30 zile</p>
-            </div>
-            <div>
-              <p className="text-sm uppercase text-white/70">Client demo</p>
-              <p className="text-3xl font-bold">{uniqueCustomers}</p>
-              <p className="text-xs text-white/70">Contacte disponibile</p>
-            </div>
-            <div>
-              <p className="text-sm uppercase text-white/70">Express share</p>
-              <p className="text-3xl font-bold">{expressShare}%</p>
-              <p className="text-xs text-white/70">Preferă livrare rapidă</p>
-            </div>
-          </div>
-        </div>
-
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card>
@@ -409,24 +360,6 @@ const AdminDashboard = () => {
                   </div>
                 ))
               )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Reset demo data</CardTitle>
-              <CardDescription>Curăță local pentru un nou tur</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Șterge comenzile curente din browser pentru a simula un cont fresh. Datele reale rămân în siguranță în backend.
-              </p>
-              <Button variant="outline" onClick={handleLocalReset}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Curăță local
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                Tip: rulează întâi &ldquo;Încarcă scenariu demo&rdquo;, apoi curăță înainte de următorul demo.
-              </p>
             </CardContent>
           </Card>
         </div>
@@ -830,13 +763,6 @@ const AdminDashboard = () => {
     const dataset = buildDemoOrders(baskets);
     seedDemoOrders(dataset, { includeCurrentUser: true, replaceExisting: true });
     toast.success("Scenariul demo cu comenzi a fost încărcat.");
-  }
-
-  function handleLocalReset() {
-    if (typeof window === "undefined") return;
-    localStorage.removeItem("baskit.orders.v3");
-    localStorage.removeItem("baskit.cart.v3");
-    window.location.reload();
   }
 
   async function handleDelete(id: string) {

@@ -41,10 +41,11 @@ const AuthContext = createContext<AuthContextValue>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>(() => {
+    if (typeof localStorage === "undefined") return { user: null, token: null };
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { user: null, token: null };
     try {
-      return JSON.parse(raw);
+      return JSON.parse(raw) as AuthState;
     } catch {
       return { user: null, token: null };
     }
@@ -54,6 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (typeof localStorage === "undefined") return;
     if (state.token) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } else {
