@@ -7,13 +7,11 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ro.baskitup.adapters.persistence.OrderRepository;
-import ro.baskitup.application.ports.PaymentPort;
 import ro.baskitup.application.services.CartService.CartItemRequest;
 import ro.baskitup.application.services.CartService.EstimateLine;
 import ro.baskitup.application.services.CartService.EstimateResult;
@@ -26,12 +24,10 @@ import ro.baskitup.domain.model.ShippingAddress;
 public class CheckoutService {
   private final OrderRepository orders;
   private final CartService cartService;
-  private final PaymentPort paymentPort;
 
-  public CheckoutService(OrderRepository orders, CartService cartService, PaymentPort paymentPort) {
+  public CheckoutService(OrderRepository orders, CartService cartService) {
     this.orders = orders;
     this.cartService = cartService;
-    this.paymentPort = paymentPort;
   }
 
   @Transactional
@@ -69,12 +65,8 @@ public class CheckoutService {
 
     Order saved = orders.save(order);
 
-    int amountMinorUnits = estimate.total().multiply(BigDecimal.valueOf(100))
-        .setScale(0, RoundingMode.HALF_UP).intValueExact();
-    String clientSecret = paymentPort.createPaymentIntent(saved.getId(), amountMinorUnits);
-    saved.setPaymentIntentId(clientSecret);
     orders.save(saved);
-    return new CheckoutResponse(saved.getId(), saved.getOrderNumber(), clientSecret);
+    return new CheckoutResponse(saved.getId(), saved.getOrderNumber(), "fake");
   }
 
   public record CheckoutResponse(UUID orderId, String orderNumber, String clientSecret) {}
