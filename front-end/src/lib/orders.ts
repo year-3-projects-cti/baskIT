@@ -1,4 +1,7 @@
-import { apiRequest } from "@/lib/api";
+import { API_BASE_URL, apiRequest } from "@/lib/api";
+
+const ORDERS_API_URL =
+  import.meta.env.VITE_ORDERS_API_URL ?? import.meta.env.VITE_API_URL ?? API_BASE_URL;
 
 export type OrderDto = {
   id: string;
@@ -61,19 +64,29 @@ export type OrderSnapshotPayload = {
 };
 
 export async function persistOrderSnapshot(payload: OrderSnapshotPayload) {
-  return apiRequest<OrderDto>("/orders", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  return apiRequest<OrderDto>(
+    "/orders",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    undefined,
+    ORDERS_API_URL
+  );
 }
 
 export async function fetchOrderBuckets() {
-  return apiRequest<Record<string, OrderDto[]>>("/orders");
+  return apiRequest<Record<string, OrderDto[]>>("/orders", {}, undefined, ORDERS_API_URL);
 }
 
 export async function updateOrderStatusApi(id: string, status: string) {
-  return apiRequest<OrderDto>(`/orders/${id}/status`, {
-    method: "POST",
-    body: JSON.stringify({ status }),
-  });
+  return apiRequest<OrderDto>(
+    `/orders/${id}/status`,
+    {
+      method: "POST",
+      body: JSON.stringify({ status }),
+    },
+    undefined,
+    ORDERS_API_URL
+  );
 }

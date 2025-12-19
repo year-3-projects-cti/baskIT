@@ -1,0 +1,234 @@
+{
+  "info": {
+    "name": "BaskIT API",
+    "_postman_id": "c6d54e5c-6f56-4c6e-9b69-5a8e1f1d7d7a",
+    "description": "Collection covering core BaskIT endpoints (auth, baskets, admin, orders, inventory). Configure variables: `baseUrl` (default http://localhost:8080/api), `ordersUrl` (default http://localhost:8081/api), `inventoryUrl` (default http://localhost:8082/api), `adminToken`, and `userToken`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password\",\n  \"name\": \"Test User\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login (save userToken)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('userToken', json.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{userToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth", "me"] }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{userToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth", "logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Catalog (public)",
+      "item": [
+        {
+          "name": "List baskets",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/baskets", "host": ["{{baseUrl}}"], "path": ["baskets"] } }
+        },
+        {
+          "name": "Featured",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/featured", "host": ["{{baseUrl}}"], "path": ["featured"] } }
+        },
+        {
+          "name": "Basket by slug",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/baskets/{{slug}}", "host": ["{{baseUrl}}"], "path": ["baskets", "{{slug}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Baskets",
+      "item": [
+        {
+          "name": "Create basket",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/baskets", "host": ["{{baseUrl}}"], "path": ["admin", "baskets"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test Basket\",\n  \"slug\": \"test-basket\",\n  \"category\": \"demo\",\n  \"prompt\": \"desc\",\n  \"price\": 100,\n  \"stock\": 10,\n  \"description\": \"<p>demo</p>\",\n  \"heroImage\": \"https://picsum.photos/seed/basket/600/400\",\n  \"tags\": [\"demo\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "Update basket",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/baskets/{{basketId}}", "host": ["{{baseUrl}}"], "path": ["admin", "baskets", "{{basketId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test Basket Updated\",\n  \"slug\": \"test-basket\",\n  \"category\": \"demo\",\n  \"prompt\": \"desc\",\n  \"price\": 120,\n  \"stock\": 5,\n  \"description\": \"<p>updated</p>\",\n  \"heroImage\": \"https://picsum.photos/seed/basket2/600/400\",\n  \"tags\": [\"demo\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete basket",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/admin/baskets/{{basketId}}", "host": ["{{baseUrl}}"], "path": ["admin", "baskets", "{{basketId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders (monolith)",
+      "item": [
+        {
+          "name": "List buckets",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] } }
+        },
+        {
+          "name": "Create snapshot (monolith)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"number\": \"BK-LOCAL-{{timestamp}}\",\n  \"createdAt\": \"{{isoNow}}\",\n  \"status\": \"processing\",\n  \"shippingMethod\": \"standard\",\n  \"userKey\": \"postman-user\",\n  \"totals\": {\"subtotal\": 100, \"shipping\": 25, \"vat\": 23.75, \"total\": 148.75},\n  \"items\": [\n    {\"id\": \"00000000-0000-0000-0000-000000000001\", \"title\": \"Demo Basket\", \"price\": 100, \"quantity\": 1}\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Update status (monolith)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/orders/{{orderId}}/status", "host": ["{{baseUrl}}"], "path": ["orders", "{{orderId}}", "status"] },
+            "body": { "mode": "raw", "raw": "{ \"status\": \"shipped\" }" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders (dedicated service)",
+      "item": [
+        {
+          "name": "List buckets",
+          "request": { "method": "GET", "url": { "raw": "{{ordersUrl}}/orders", "host": ["{{ordersUrl}}"], "path": ["orders"] } }
+        },
+        {
+          "name": "Create snapshot",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{ordersUrl}}/orders", "host": ["{{ordersUrl}}"], "path": ["orders"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"number\": \"BK-ORDERSVC-{{timestamp}}\",\n  \"createdAt\": \"{{isoNow}}\",\n  \"status\": \"processing\",\n  \"shippingMethod\": \"standard\",\n  \"userKey\": \"postman-user\",\n  \"totals\": {\"subtotal\": 100, \"shipping\": 25, \"vat\": 23.75, \"total\": 148.75},\n  \"items\": [\n    {\"id\": \"00000000-0000-0000-0000-000000000002\", \"title\": \"Demo Basket\", \"price\": 100, \"quantity\": 1}\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Update status",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{ordersUrl}}/orders/{{orderId}}/status", "host": ["{{ordersUrl}}"], "path": ["orders", "{{orderId}}", "status"] },
+            "body": { "mode": "raw", "raw": "{ \"status\": \"shipped\" }" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Inventory service",
+      "item": [
+        {
+          "name": "Processed orders (Rabbit consumer)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{inventoryUrl}}/inventory/processed", "host": ["{{inventoryUrl}}"], "path": ["inventory", "processed"] }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api" },
+    { "key": "ordersUrl", "value": "http://localhost:8081/api" },
+    { "key": "inventoryUrl", "value": "http://localhost:8082/api" },
+    { "key": "adminToken", "value": "" },
+    { "key": "userToken", "value": "" },
+    { "key": "slug", "value": "test-basket" },
+    { "key": "basketId", "value": "00000000-0000-0000-0000-000000000001" },
+    { "key": "orderId", "value": "00000000-0000-0000-0000-000000000003" },
+    { "key": "timestamp", "value": "{{$timestamp}}" },
+    { "key": "isoNow", "value": "{{$isoTimestamp}}" }
+  ]
+}

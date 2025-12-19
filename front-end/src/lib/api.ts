@@ -2,7 +2,12 @@ const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080/api"
 
 type RequestOptions = RequestInit & { skipJson?: boolean };
 
-export async function apiRequest<T>(path: string, options: RequestOptions = {}, token?: string): Promise<T> {
+export async function apiRequest<T>(
+  path: string,
+  options: RequestOptions = {},
+  token?: string,
+  baseUrl: string = API_BASE_URL
+): Promise<T> {
   const headers = new Headers(options.headers);
   if (!headers.has("Accept")) headers.set("Accept", "application/json");
   const hasBody = options.body !== undefined && options.body !== null;
@@ -13,7 +18,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}, 
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`${baseUrl}${path}`, {
     ...options,
     headers,
   });

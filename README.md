@@ -34,12 +34,16 @@ Services:
 
 - Front-end (Nginx serving the Vite build) → http://localhost:5173
 - Back-end (Spring Boot) → http://localhost:8080
+- Orders service (Spring Boot) → http://localhost:8081 (`/api/orders` only)
+- Inventory service (Spring Boot) → http://localhost:8082 (`/api/inventory/processed`, consumes RabbitMQ order-paid)
 - RabbitMQ broker → amqp://localhost:5672 (UI on :15672)
 ```
-  curl -X POST http://localhost:8080/api/orders                                                                                                                                                    
-  curl -X POST http://localhost:8080/api/orders/{id}/paid -H "Content-Type: application/json" -d '{"paymentRef":"TEST-REF"}'  
-
+  curl -X POST http://localhost:8081/api/orders
+  curl -X POST http://localhost:8081/api/orders/{id}/status -H "Content-Type: application/json" -d '{"status":"shipped"}'
+  curl http://localhost:8082/api/inventory/processed
 ```
+
+The front-end now supports a dedicated orders API base via `VITE_ORDERS_API_URL` (default `http://localhost:8081/api`); other endpoints continue to use `VITE_API_URL` (default `http://localhost:8080/api`).
 
 Stop everything via `docker compose down`. Adjust environment variables (Spring profiles, DB URLs, API keys) directly inside `docker-compose.yml` when needed.
 
